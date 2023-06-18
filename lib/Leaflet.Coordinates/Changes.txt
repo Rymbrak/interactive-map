@@ -1,0 +1,2 @@
+Coordinate label made black for better visibility.
+Disabled wrapping since we are using a flat map, see line 263.

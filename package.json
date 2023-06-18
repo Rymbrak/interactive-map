@@ -1,0 +1,91 @@
+{
+  "name": "interactive-map",
+  "displayName": "Interactive Map",
+  "description": "Interactive map based on Leaflet. Place markers with descriptions, paths and draw regions. Use custom images for maps.",
+  "version": "0.2.0",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "icon": "media/geo-alt.png",
+  "activationEvents": [
+    "onWebviewPanel:interactiveMap"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "interactive-map.openMap",
+        "title": "Open Map",
+        "category": "Interactive Map"
+      },
+      {
+        "command": "interactive-map.showView",
+        "title": "Show View",
+        "category": "Interactive Map"
+      },
+      {
+        "command": "interactive-map.createMap",
+        "title": "Create Map",
+        "category": "Interactive Map"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "interactive-map",
+          "title": "Interactive Map",
+          "icon": "media/geo-alt.svg"
+        }
+      ]
+    },
+    "views": {
+      "interactive-map": [
+        {
+          "type": "webview",
+          "id": "interactive-map-sidebar",
+          "name": "Interactive Map",
+          "icon": "media/geo-alt.svg",
+          "contextualTitle": "Interactive Map"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "webpack": "webpack --mode development"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/Rymbrak/interactive-map.git"
+  },
+  "devDependencies": {
+    "@types/glob": "^8.0.1",
+    "@types/leaflet": "^1.9.0",
+    "@types/leaflet-draw": "^1.0.6",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "16.x",
+    "@types/vscode": "^1.75.0",
+    "@typescript-eslint/eslint-plugin": "^5.49.0",
+    "@typescript-eslint/parser": "^5.49.0",
+    "@vscode/test-electron": "^2.2.2",
+    "eslint": "^8.33.0",
+    "glob": "^8.1.0",
+    "mocha": "^10.1.0",
+    "ts-loader": "^9.4.3",
+    "typescript": "^4.9.4",
+    "webpack": "^5.85.1",
+    "webpack-cli": "^5.1.3"
+  },
+  "dependencies": {
+    "leaflet": "^1.9.3",
+    "leaflet-draw": "^1.0.4"
+  }
+}
