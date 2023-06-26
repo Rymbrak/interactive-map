@@ -9,6 +9,7 @@ import "leaflet-draw";
 import { MapUtilities } from "./MapUtilities";
 import { Load } from "./Load";
 import { Utilities } from "./Utilities";
+import { VersionManager } from "./Version";
 
 export module InteractiveMap {
 
@@ -40,6 +41,7 @@ export module InteractiveMap {
         mapUtilities: IFeatureUtilities;
         toolbarManager: IToolbar;
         loadManager: ILoadManager;
+        versionManager: VersionManager;
 
         map: L.Map;
 
@@ -60,7 +62,8 @@ export module InteractiveMap {
             this.iconManager = new Icons.IconManager();
             this.layerManager = new Layers.LayerManager(this.map);
             this.featureFactory = new FeatureFactories.FeatureFactory(this.layerManager, this.iconManager);
-            this.saveManager = new Save.SaveManager(this.vscode, this.layerManager);
+            this.versionManager = new VersionManager();
+            this.saveManager = new Save.SaveManager(this.vscode, this.layerManager, this.versionManager);
             this.init(image);
 
             this.mapUtilities = new MapUtilities.FeatureUtilities(this.map, this.layerManager, this.iconManager, this.saveManager);
@@ -121,7 +124,7 @@ export module InteractiveMap {
          */
         public load(layers: layer[]) {
             this.loadManager.loadLayers(layers);
-            this.sidebarManager.populateSidebarMarkers();
+            this.sidebarManager.populateSidebarFeatures();
         }
 
         /**
@@ -139,7 +142,7 @@ export module InteractiveMap {
             this.layerManager.getLayer("rectangle").clearLayers();
             this.layerManager.getLayer("circle").clearLayers();
             this.layerManager.getLayer("marker").clearLayers();
-            this.layerManager.getLayer("circleMarker").clearLayers();
+            this.layerManager.getLayer("circlemarker").clearLayers();
             this.layerManager.getDrawnItems().clearLayers();
 
             /**

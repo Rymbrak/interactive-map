@@ -36,6 +36,7 @@ export module FeatureFactories {
             let coord = json.geometry.coordinates as [number, number][][];
 
             var rectangle = L.rectangle([Utilities.xy(coord[0][0]), Utilities.xy(coord[0][1]), Utilities.xy(coord[0][2]), Utilities.xy(coord[0][3])]);
+            rectangle.bindPopup("<h1>" + json.properties.name + "</h1>" + "<hr  class=separator>" + json.properties.desc);
             return this.createFeature(rectangle, "rectangle", json);
         }
 
@@ -43,8 +44,8 @@ export module FeatureFactories {
 
             let coord = json.geometry.coordinates as [number, number];
 
-            var circleMarker = L.circleMarker([coord[1], coord[0]]).bindPopup(json.properties.desc);
-            return this.createFeature(circleMarker, "circleMarker", json);
+            var circleMarker = L.circleMarker([coord[1], coord[0]]).bindPopup("<h1>" + json.properties.name + "</h1>" + "<hr  class=separator>" + json.properties.desc);
+            return this.createFeature(circleMarker, "circlemarker", json);
         }
 
         createPolygon(json: feature) {
@@ -61,6 +62,7 @@ export module FeatureFactories {
             let coords = Utilities.getCoords(polyCoords);
 
             let polygon = L.polygon(coords);
+            polygon.bindPopup("<h1>" + json.properties.name + "</h1>" + "<hr  class=separator>" + json.properties.desc);
             return this.createFeature(polygon, "polygon", json);
         }
 
@@ -71,6 +73,7 @@ export module FeatureFactories {
              */
             let coords = Utilities.getCoords(json.geometry.coordinates);
             let polyline = L.polyline(coords);
+            polyline.bindPopup("<h1>" + json.properties.name + "</h1>" + "<hr  class=separator>" + json.properties.desc);
             return this.createFeature(polyline, "polyline", json);
         }
 
@@ -79,6 +82,7 @@ export module FeatureFactories {
             let coord = json.geometry.coordinates as [number, number];
 
             let circle = L.circle([coord[1], coord[0]], json.radius ?? 1);
+            circle.bindPopup("<h1>" + json.properties.name + "</h1>" + "<hr  class=separator>" + json.properties.desc);
             return this.createFeature(circle, "circle", json);
         }
 
@@ -97,7 +101,7 @@ export module FeatureFactories {
             this.drawnItems.addLayer(element);
             return element;
         }
-        
+
     }
 
 }

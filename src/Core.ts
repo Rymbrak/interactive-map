@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import { getHtmlForWebview } from "./Template";
 import { SidebarProvider } from "./SidebarProvider";
 import { createSettings, readSettings, saveSettings } from "./Settings";
-import { IMapManager } from "./IMapManager";
+import { IMapManager } from "./webview/Interfaces/IMapManager";
 
 export class Core {
 
@@ -238,9 +238,7 @@ export class Core {
                             this.refresh = true;
                             this.saveCall();
                             return;
-                        case 'load images':
 
-                            return;
                     }
                 },
                 undefined,

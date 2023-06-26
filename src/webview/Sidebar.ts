@@ -15,12 +15,29 @@ export module Sidebar {
         saveManager: ISaveManager;
         mapUtilities: IFeatureUtilities;
 
+        sidebarPolylineId = "polylines";
+        sidebarPolylineTitle = "Polylines";
+
+        sidebarPolygonId = "polygons";
+        sidebarPolygonTitle = "Polygons";
+
+        sidebarRectangleId = "rectangle";
+        sidebarRectangleTitle = "Rectangles";
+
+        sidebarCircleId = "circles";
+        sidebarCircleTitle = "Circles";
+
         sidebarMarkerId = "markers";
         sidebarMarkerTitle = "Markers";
+
+        sidebarCircleMarkerId = "circlemarkers";
+        sidebarCircleMarkerTitle = "Circle Markers";
+
         sidebarSettingsId = "settings";
         sidebarSettingsTitle = "Settings";
 
         highlight: HTMLElement | undefined;
+        highlightLayer: string = "";
 
         constructor(vscode: any, map: L.Map, iconManager: IIconManager, layerManager: ILayerManager, saveManager: ISaveManager, mapUtilities: IFeatureUtilities) {
 
@@ -35,9 +52,18 @@ export module Sidebar {
             this.saveManager = saveManager;
             this.mapUtilities = mapUtilities;
 
-            this.createMarkerPanel();
-            this.createSettingsPanel();
+            /**
+             * Create panels for the sidebar. Order of creation is the same order they appear in.
+             */
 
+            this.createFeaturePanel("polyline", "polyline", this.sidebarPolylineId, this.sidebarPolylineTitle);
+            this.createFeaturePanel("polygon", "polygon", this.sidebarPolygonId, this.sidebarPolygonTitle);
+            this.createFeaturePanel("rectangle", "rectangle", this.sidebarRectangleId, this.sidebarRectangleTitle);
+            this.createFeaturePanel("circle", "circle", this.sidebarCircleId, this.sidebarCircleTitle);
+            this.createFeaturePanel("marker", "marker", this.sidebarMarkerId, this.sidebarMarkerTitle);
+            this.createFeaturePanel("circlemarker", "circle marker", this.sidebarCircleMarkerId, this.sidebarCircleMarkerTitle);
+
+            this.createSettingsPanel();
         }
 
         /**
@@ -62,16 +88,28 @@ export module Sidebar {
         }
 
         /**
-         * Create a panel in the sidebar that lists all markers with editable descriptions and names.
+         * Creates a panel in the sidebar using the given icon, feature name id and title.
+         * @param icon Name of the icon to be retrieved from the Icon storage.
+         * @param featureName Name of the feature. It will be used in the default content.
+         * @param id ID for the sidebar panel.
+         * @param title Title for the sidebar panel.
          */
-        createMarkerPanel() {
+        createFeaturePanel(icon: string, featureName: string, id: string, title: string) {
+            this.createPanel(id,
+                this.iconManager.getIcon(icon, ""),
+                this.emptyFeaturePanel(featureName),
+                title);
+        }
 
-            this.createPanel(this.sidebarMarkerId,
-                this.iconManager.getIcon("marker"),
-                '<p class="panel">' + '<span class="markerEntryBody">' +
-                "Map contains no markers. Use the toolbar on the left to place new markers." +
-                '</span>' + '  </p>',
-                this.sidebarMarkerTitle);
+        /**
+         * Returns a message for panels whose feature list is empty.
+         * @param featureName Name of the feature in singular form such as 'marker'.
+         * @returns.
+         */
+        emptyFeaturePanel(featureName: string) {
+            return '<p class="panel">' + '<span class="markerEntryBody">' +
+                "Map contains no " + featureName + "s. Use the toolbar on the left to place new " + featureName + "s." +
+                '</span>' + '  </p>';
         }
 
         /**
@@ -80,7 +118,7 @@ export module Sidebar {
         createSettingsPanel() {
 
             this.createPanel(this.sidebarSettingsId,
-                this.iconManager.getIcon("settings"),
+                this.iconManager.getIcon("settings", ""),
                 '<p class="panel">' + '<div id="dropBackground" class="drop">' +
                 '<div class="verticalAlign"> ' +
                 "Drop an image here to set the map's background. \n" +
@@ -144,29 +182,53 @@ export module Sidebar {
         }
 
         /**
-         *  Create the HTML for the sidebar panel content. Each marker has an entry with a header, a button for locating the marker on the map and a description.
+         * Function to (re)create panes in the sidebar for each tracked feature type.
+         * These panes contain entries for each feature of the matching type, which allow you to edit their name and description, as well as locating them on the map.
          */
-        populateSidebarMarkers() {
+        populateSidebarFeatures() {
+
+            this.populateSidebarFeature(this.sidebarPolylineId, this.sidebarPolylineTitle, "polyline-small", "polyline", "polyline");
+            this.populateSidebarFeature(this.sidebarPolygonId, this.sidebarPolygonTitle, "polygon-small", "polygon", "polygon");
+            this.populateSidebarFeature(this.sidebarRectangleId, this.sidebarRectangleTitle, "rectangle-small", "rectangle", "rectangle");
+            this.populateSidebarFeature(this.sidebarCircleId, this.sidebarCircleTitle, "circle-small", "circle", "circle");
+            this.populateSidebarFeature(this.sidebarMarkerId, this.sidebarMarkerTitle, "marker-small", "marker", "marker");
+            this.populateSidebarFeature(this.sidebarCircleMarkerId, this.sidebarCircleMarkerTitle, "circlemarker-small", "circlemarker", "circle marker");
+        }
+
+        /**
+         * Create the html for the sidebar panel content. Each feature has an entry with a header, a button for locating the feature on the map and a description.
+         * @param id Id for the pane.
+         * @param title Name of the pane.
+         * @param headerIcon Icon used for the pane. You can pass html (such as the strings provided by the IconManager.)
+         * @param layer Name of the layer from the LayerManager containing the desired features.
+         */
+        populateSidebarFeature(id: string, title: string, headerIcon: string, layer: string, featureName: string) {
             var entries = "";
 
             var index = 0;
-            this.layerManager.getLayer("marker").getLayers().forEach((element: any) => {
+            let layers = this.layerManager.getLayer(layer).getLayers();
+
+            layers.forEach((element: any) => {
                 entries += '<div class="markerEntryBox">' +
                     '<div class="markerHeaderDiv">' +
-                    this.sidebarMarkerHeaderButton(index, "marker-small") +
-                    this.sidebarMarkerHeader(element.feature.properties.name, index) +
+                    this.sidebarMarkerHeaderButton(layer, index, headerIcon) +
+                    this.sidebarMarkerHeader(layer, element.feature.properties.name, index) +
                     this.sidebarMarkerIdHeader(element._leaflet_id) +
                     '</div>' +
                     '<div class="markerHeaderDiv">' +
-                    this.sidebarMarkerBody(element.feature.properties.desc, index) +
+                    this.sidebarMarkerBody(layer, element.feature.properties.desc, index) +
                     '</div>' +
                     '</div>';
                 index++;
             });
 
+            if (layers.length === 0) {
+                entries += this.emptyFeaturePanel(featureName);
+            }
+
             entries = '<div class="panelContent">' + entries + '</div>';
 
-            this.updatePane(entries);
+            this.updatePane(id, title, layer, entries);
         }
 
         /**
@@ -187,21 +249,21 @@ export module Sidebar {
         /**
          *  Update the content of a pane with the given id.
          * @param {*} id Id of the panel to update.
-         * @param {*} content HTML content to use for updating.
+         * @param {*} name Title of the Pane
+         * @param {*} entries HTML content to use for updating.
          */
-        updatePane(entries: string) {
+        updatePane(id: string, name: string, layer: string, entries: string) {
 
             var content = '';
-            content += '<h1 class="leaflet-sidebar-header">' + this.sidebarMarkerTitle;
+            content += '<h1 class="leaflet-sidebar-header">' + name;
             content += '<span class="leaflet-sidebar-close"><i class="fa fa-caret-' + this.sidebar.options.position + '"></i></span>';
             content += '</h1>';
 
-            var pane = this.getPane(this.sidebarMarkerId);
+            var pane = this.getPane(id);
             pane.innerHTML = content + '<p class="panel">' + entries + '  </p>';
 
-            this.addListeners();
+            this.addListeners(layer);
         }
-
 
         /**
          * Creates a HTML label for the marker's Leaflet Id.
@@ -220,8 +282,8 @@ export module Sidebar {
          * @param {*} index Index of the marker in markerLayer.
          * @returns A HTML string.
          */
-        sidebarMarkerHeader(name: string, index: number) {
-            return '<textarea id="markerName' + index + '" class="markerEntryHeader" contenteditable>' +
+        sidebarMarkerHeader(layer: string, name: string, index: number) {
+            return '<textarea id="' + layer + 'Name' + index + '" class="markerEntryHeader" contenteditable>' +
                 name +
                 '</textarea>';
         }
@@ -231,10 +293,10 @@ export module Sidebar {
          * @param {*} index Index of the marker in markerLayer.
          * @returns A HTML string.
          */
-        sidebarMarkerHeaderButton(index: number, icon: string) {
+        sidebarMarkerHeaderButton(layer: string, index: number, icon: string) {
 
-            return '<button id="markerButton' + index + '" class ="btn">' +
-                this.iconManager.getIcon(icon) +
+            return '<button id="' + layer + 'Button' + index + '" class ="btn">' +
+                this.iconManager.getIcon(icon, "") +
                 '</button>';
         }
 
@@ -244,8 +306,8 @@ export module Sidebar {
          * @param {*} index Index of the marker in markerLayer.
          * @returns A HTML string.
          */
-        sidebarMarkerBody(text: string, index: number) {
-            return '<textarea id="marker' + index + '" class="markerEntryBody" contenteditable>' +
+        sidebarMarkerBody(layer: string, text: string, index: number) {
+            return '<textarea id="' + layer + index + '" class="markerEntryBody" contenteditable>' +
                 text +
                 '</textarea>';
         }
@@ -254,40 +316,46 @@ export module Sidebar {
          * Setup listeners for the marker entries in the sidebar. 
          * 
          * Each entry consists of a location button, a name field and a body. The name and body fields have listeners to update the corresponding marker.
+         * @param layer Name of the layer we want to add listeners to.
          */
-        addListeners() {
+        addListeners(layer: string) {
             let index = 0;
-            this.layerManager.getLayer("marker").getLayers().forEach((element: any) => {
+            this.layerManager.getLayer(layer).getLayers().forEach((element: any) => {
                 let number = index; // Use a temp variable, otherwise it would use the final value of index...
-                document.getElementById("markerName" + index)?.addEventListener("change", (e) => this.mapUtilities.setMarkerName(number));
-                document.getElementById("markerButton" + index)?.addEventListener("click", (e) => {
-                    this.mapUtilities.panToMarker(number);
-                    this.mapUtilities.highlightMarker(number);
-                    this.highlightSidebarMarker(number);
+                document.getElementById(layer + "Name" + index)?.addEventListener("change", (e) => this.mapUtilities.setFeatureName(layer, number));
+                document.getElementById(layer + "Button" + index)?.addEventListener("click", (e) => {
+                    this.mapUtilities.panToFeature(layer, number);
+                    this.mapUtilities.highlightFeature(layer, number);
+                    this.highlightSidebarMarker(layer, number);
                 });
-                document.getElementById("marker" + index)?.addEventListener("change", (e) => this.mapUtilities.setMarkerDesc(number));
+                document.getElementById(layer + index)?.addEventListener("change", (e) => this.mapUtilities.setFeatureDesc(layer, number));
 
                 index++;
             });
         }
 
-        highlightSidebarMarker(index: number) {
+        /**
+         * Highlight a feature in the sidebar.
+         * @param index 
+         */
+        highlightSidebarMarker(layer: string, index: number) {
 
-            var marker = document.getElementById("markerButton" + index);
+            var feature = document.getElementById(layer + "Button" + index);
 
-            if (marker) {
+            if (feature) {
 
                 if (this.highlight) {
-                    this.highlight.innerHTML = this.iconManager.getIcon("marker-small");
+                    this.highlight.innerHTML = this.iconManager.getIcon(this.highlightLayer + "-small", "");
                 }
 
-                marker.innerHTML = this.iconManager.getIcon("marker-highlight-small");
+                feature.innerHTML = this.iconManager.getIcon(layer + "-small", "highlight");
 
-                this.highlight = marker;
+                /**
+                 * Store current highlighted element and the layer so we can reset their values when the highlight changes.
+                 */
+                this.highlight = feature;
+                this.highlightLayer = layer;
             }
-
-
-
         }
 
     }

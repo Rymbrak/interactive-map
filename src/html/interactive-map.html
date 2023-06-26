@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <!--
+			Use a content security policy to only allow loading images from https or from our extension directory,
+			and only allow scripts that have a specific nonce.
+		-->
+    <meta http-equiv="Content-Security-Policy"
+        content="img-src https: data:; style-src 'unsafe-inline' ${webview.cspSource}; script-src 'nonce-${nonce}';">
+    <link rel="stylesheet" href="${cssLeaflet}" />
+    <link rel="stylesheet" href="${cssDraw}" />
+    <link rel="stylesheet" href="${cssSidePanel}" />
+    <link rel="stylesheet" href="${cssIMap}" />
+    <link rel="stylesheet" href="${cssBootstrap}" />
+    <link rel="stylesheet" href="${cssCoord}" />
+</head>
+
+<body>
+    <div id="sidebar" class="leaflet-sidebar collapsed">
+    </div>
+    </div>
+
+    <div id="map"></div>
+
+    <script script nonce="${nonce}" src="${scriptIMap}"></script>
+    <script script nonce="${nonce}" src="${scriptCoord}"></script>
+    <script script nonce="${nonce}" src="${scriptSidePanel}"></script>
+    <script nonce="${nonce}">
+
+        let vscode = acquireVsCodeApi();
+
+        let map = EntryPoint.InteractiveMap.main(vscode, '${emptyMap}');
+
+        window.addEventListener('message', event => {
+
+            const message = event.data; // The JSON data our extension sent
+
+            switch (message.command) {
+                case 'openMap':
+                    map.clear();
+                    if (message.imagePath !== "") {
+                        map.setMap(message.imagePath, [message.bounds[0], message.bounds[1]]);
+                    } else {
+                        map.setMap('${emptyMap}', [message.bounds[0], message.bounds[1]]);
+                    }
+                    map.load(message.layers);
+                    vscode.setState(message.fileName);
+                    break;
+                case 'saveMap':
+                    map.saveManager.saveMap();
+                    break;
+            }
+        });
+    </script>
+
+</body>
+
+</html>

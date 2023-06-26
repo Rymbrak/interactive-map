@@ -6,13 +6,15 @@ export module Save {
 
         vscode: any;
         layerManager: ILayerManager;
+        versionManager;
         filePath: string = "";
         mBounds: [number, number][] = [];
 
-        constructor(vscode: any, layerManager: ILayerManager) {
+        constructor(vscode: any, layerManager: ILayerManager, versionManager: IVersionManager) {
 
             this.vscode = vscode;
             this.layerManager = layerManager;
+            this.versionManager = versionManager;
         }
 
         /**
@@ -26,11 +28,11 @@ export module Save {
             const rectangles = this.wrapLayer("rectangle");
             const circles = this.wrapLayer("circle");
             const markers = this.wrapLayer("marker");
-            const circleMarkers = this.wrapLayer("circleMarker");
+            const circleMarkers = this.wrapLayer("circlemarker");
             const result =
             {
                 type: 'Interactive-Map',
-                version: '0.1.0',
+                version: this.versionManager.version,
                 mapPath: this.filePath,
                 bounds: [Utilities.xy(this.mBounds[0]),
                 Utilities.xy(this.mBounds[1])],

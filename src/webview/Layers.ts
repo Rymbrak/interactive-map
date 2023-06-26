@@ -74,7 +74,7 @@ export module Layers {
             this.layerMap.set("rectangle", rectangleLayer);
             this.layerMap.set("circle", circleLayer);
             this.layerMap.set("marker", markerLayer);
-            this.layerMap.set("circleMarker", circleMarkerLayer);
+            this.layerMap.set("circlemarker", circleMarkerLayer);
 
             this.setupLayerEvents();
             this.layerVisibility();
@@ -160,7 +160,7 @@ export module Layers {
                 // eslint-disable-next-line @typescript-eslint/naming-convention
                 'Show Markers': this.getLayer("marker"),
                 // eslint-disable-next-line @typescript-eslint/naming-convention
-                'Show Circle Markers': this.getLayer("circleMarker")
+                'Show Circle Markers': this.getLayer("circlemarker")
             }, { position: 'topleft', collapsed: true }).addTo(this.map);
 
             this.map.on('overlayadd', (event) => {

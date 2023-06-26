@@ -2,7 +2,8 @@
   "name": "interactive-map",
   "displayName": "Interactive Map",
   "description": "Interactive map based on Leaflet. Place markers with descriptions, paths and draw regions. Use custom images for maps.",
-  "version": "0.2.0",
+  "version": "0.2.1",
+  "publisher": "Rymbrak",
   "engines": {
     "vscode": "^1.75.0"
   },
@@ -60,7 +61,9 @@
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
     "test": "node ./out/test/runTest.js",
-    "webpack": "webpack --mode development"
+    "webpack": "webpack --mode development",
+    "copyhtml": "cp -r ./src/html ./out/",
+    "pack": "npm run copyhtml && npm run webpack"
   },
   "repository": {
     "type": "git",

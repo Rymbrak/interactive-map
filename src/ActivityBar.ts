@@ -11,7 +11,18 @@ class ActivityBar {
 
         this.vscode = vscode;
         this.nonce = nonce;
+    }
 
+    /**
+     * Creates listeners for buttons in the activity bar.
+     */
+    addListeners() {
+        let element = document.getElementById("createMap");
+        element?.addEventListener("click", (e) => {
+            this.vscode.postMessage({
+                command: 'createMap',
+            });
+        });
     }
 
     /**

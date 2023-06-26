@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { IMapManager } from "./IMapManager";
+import { IMapManager } from "./webview/Interfaces/IMapManager";
 import { getEmpty } from "./Template";
 
 /**
@@ -8,7 +8,8 @@ import { getEmpty } from "./Template";
 export class MapManager implements IMapManager {
 
     refresh = false;
-    version: string = "0.2.0";
+    versionManager: IVersionManager;
+
     /**
     * Filepath of the current map's image.
     */
@@ -19,8 +20,9 @@ export class MapManager implements IMapManager {
     fileName: string = "";
     extensionContext: vscode.ExtensionContext;
 
-    constructor(extensionContext: vscode.ExtensionContext) {
+    constructor(extensionContext: vscode.ExtensionContext, versionManager: IVersionManager) {
         this.extensionContext = extensionContext;
+        this.versionManager = versionManager;
     }
 
     // Creates and saves a map file for the given name and data.
@@ -46,7 +48,7 @@ export class MapManager implements IMapManager {
         let data = JSON.stringify(
             {
                 type: "Interactive-Map",
-                version: this.version,
+                version: this.versionManager.version,
                 mapPath: "",
                 bounds: [[0, 0], [1024, 1024]],
                 layers: [
@@ -86,7 +88,7 @@ export class MapManager implements IMapManager {
                         }
                     },
                     {
-                        name: "circleMarker",
+                        name: "circlemarker",
                         content: {
                             type: "FeatureCollection",
                             features: []
@@ -99,7 +101,7 @@ export class MapManager implements IMapManager {
 
     /**
      * Reads the map file with the given name in the workspace.
-     * Displays a message if no workspace was foumd.
+     * Displays a message if no workspace was found.
      * @param fileName File name including the path starting after the workspace.
      * @param context VSCode Extension context.
      * @returns  a mapFile if the file is valid, otherwise undefined.
@@ -116,9 +118,15 @@ export class MapManager implements IMapManager {
 
         const wf = vscode.workspace.workspaceFolders[0].uri;
         const path = vscode.Uri.joinPath(wf, fileName);
+        let content: string;
 
         try {
-            json = JSON.parse((await vscode.workspace.fs.readFile(path)).toString());
+            content = (await vscode.workspace.fs.readFile(path)).toString();
+            /*
+              * Check the content and apply patches for differing versions if needed.
+              */
+            content = this.versionManager.convert(content);
+            json = JSON.parse(content);
         }
         catch {
             return undefined;
@@ -142,14 +150,14 @@ export class MapManager implements IMapManager {
             let element = mapNames[i];
 
             let map: mapFile | undefined = await this.readMap(element);
-            if (map === undefined || map?.mapPath ==="") {
+            if (map === undefined || map?.mapPath === "") {
                 result.push(getEmpty(this.extensionContext, webview));
                 continue;
             }
 
             result.push(webview.asWebviewUri(vscode.Uri.joinPath(wf, map.mapPath)).toString());
         }
-        
+
         return result;
     }
 

@@ -13,7 +13,6 @@ Supported feature layers:
 - Polylines
 - Polygons
 - Rectangles
-- Circles (Resizing them is not saved yet.)
+- Circles
 
-Currently, maps have to be created with the 'Create Map' command, which expects a relative path.
-Afterwards the map can be opened from the activity bar.
+Maps can be created from the activity bar icon, which also lists recently opened maps.

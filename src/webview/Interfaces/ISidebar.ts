@@ -1,4 +1,4 @@
 interface ISidebar {
-    populateSidebarMarkers(): void;
+    populateSidebarFeatures(): void;  
     createPanel(panelId: string, icon: string, content: string, title: string): void;
 }

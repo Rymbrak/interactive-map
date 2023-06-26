@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { readSettings } from "./Settings";
 import { getHtmlForActivityBar } from "./Template";
-import { IMapManager } from "./IMapManager";
+import { IMapManager } from "./webview/Interfaces/IMapManager";
 
 export class SidebarProvider implements vscode.WebviewViewProvider {
     _view?: vscode.WebviewView;
@@ -48,6 +48,11 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                 case "open": {
 
                     vscode.commands.executeCommand('interactive-map.open', message.path);
+                    break;
+                }
+                case 'createMap': {
+
+                    vscode.commands.executeCommand('interactive-map.createMap');
                     break;
                 }
             }

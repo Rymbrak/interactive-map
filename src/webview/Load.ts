@@ -27,7 +27,7 @@ export module Load {
                     this.loadMarkers(element);
                 }
 
-                if (element.name === "circleMarker") {
+                if (element.name === "circlemarker") {
                     this.loadCircleMarkers(element);
                 }
 
@@ -62,7 +62,7 @@ export module Load {
             json.content.features.forEach(element => {
                 this.featureFactory.createCircleMarker(element);
             });
-            this.layerManager.getLayer("circleMarker").addTo(this.map);
+            this.layerManager.getLayer("circlemarker").addTo(this.map);
         }
 
         loadRectangles(json: layer) {

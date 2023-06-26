@@ -8,7 +8,7 @@ export module Toolbar {
 
         drawControl: L.Control.Draw;
         layerManager: ILayerManager;
-        saveManger: ISaveManager;
+        saveManager: ISaveManager;
         sidebarManager: ISidebar;
         iconManager: IIconManager;
 
@@ -19,7 +19,7 @@ export module Toolbar {
             this.map = map;
             this.layerManager = layerManager;
             this.iconManager = iconManager;
-            this.saveManger = saveManager;
+            this.saveManager = saveManager;
             this.sidebarManager = sidebarManager;
 
             this.drawControl = this.drawControl = new L.Control.Draw({
@@ -53,7 +53,7 @@ export module Toolbar {
             let markerLayer = this.layerManager.getLayer("marker");
             let rectangleLayer = this.layerManager.getLayer("rectangle");
             let circleLayer = this.layerManager.getLayer("circle");
-            let circleMarkerLayer = this.layerManager.getLayer("circleMarker");
+            let circleMarkerLayer = this.layerManager.getLayer("circlemarker");
             let polylineLayer = this.layerManager.getLayer("polyline");
             let polygonLayer = this.layerManager.getLayer("polygon");
 
@@ -78,36 +78,57 @@ export module Toolbar {
                     layer.bindPopup(props.desc);
                     markerLayer.addLayer(layer);
                     layer.setIcon(this.iconManager.getDivIcon("marker"));
-                    this.sidebarManager.populateSidebarMarkers();
+                    this.sidebarManager.populateSidebarFeatures();
                 }
 
                 if (event.layerType === "rectangle") {
+                    layer.bindPopup(props.desc);
                     rectangleLayer.addLayer(layer);
+                    this.sidebarManager.populateSidebarFeatures();
                 }
 
                 if (event.layerType === "circle") {
+                    layer.bindPopup(props.desc);
                     feature.radius = layer._mRadius;
                     circleLayer.addLayer(layer);
+                    this.sidebarManager.populateSidebarFeatures();
                 }
 
                 if (event.layerType === "circlemarker") {
+                    layer.bindPopup(props.desc);
                     circleMarkerLayer.addLayer(layer);
+                    this.sidebarManager.populateSidebarFeatures();
                 }
 
                 if (event.layerType === "polyline") {
+                    layer.bindPopup(props.desc);
                     polylineLayer.addLayer(layer);
+                    this.sidebarManager.populateSidebarFeatures();
                 }
 
                 if (event.layerType === "polygon") {
-
+                    layer.bindPopup(props.desc);
                     polygonLayer.addLayer(layer);
+                    this.sidebarManager.populateSidebarFeatures();
                 }
 
-                this.saveManger.saveMap();
+                this.saveManager.saveMap();
             });
 
-            this.map.on(L.Draw.Event.EDITED, (event) => {
-                this.saveManger.saveMap();
+            this.map.on(L.Draw.Event.EDITED, (event: any) => {
+console.log(event);
+console.log(event.layers);
+console.log(event.layers._layers);
+                /**
+                 * The radius of a circle is a separate property that isn't saved when we turn the layer in to GeoJson, so we need to update the radius in the feature section.
+                 */
+                event.layers.eachLayer((element: any) => {
+                    if (element._mRadius) {
+                        element.feature.radius = element._mRadius;
+                    }
+                });
+
+                this.saveManager.saveMap();
             });
 
             this.map.on(L.Draw.Event.DELETED, (event: any) => {
@@ -116,26 +137,31 @@ export module Toolbar {
                     if (layer.feature.layerType === "marker") {
                         markerLayer.removeLayer(layer);
                         // Since a marker was removed, we need to regenerate the sidebar content
-                        this.sidebarManager.populateSidebarMarkers();
+                        this.sidebarManager.populateSidebarFeatures();
                     }
                     if (layer.feature.layerType === "rectangle") {
                         rectangleLayer.removeLayer(layer);
+                        this.sidebarManager.populateSidebarFeatures();
                     }
                     if (layer.feature.layerType === "circle") {
                         circleLayer.removeLayer(layer);
+                        this.sidebarManager.populateSidebarFeatures();
                     }
                     if (layer.feature.layerType === "circlemarker") {
                         circleMarkerLayer.removeLayer(layer);
+                        this.sidebarManager.populateSidebarFeatures();
                     }
                     if (layer.feature.layerType === "polyline") {
                         polylineLayer.removeLayer(layer);
+                        this.sidebarManager.populateSidebarFeatures();
                     }
                     if (layer.feature.layerType === "polygon") {
                         polygonLayer.removeLayer(layer);
+                        this.sidebarManager.populateSidebarFeatures();
                     }
                 });
 
-                this.saveManger.saveMap();
+                this.saveManager.saveMap();
             });
         }
     }

@@ -1,3 +1,26 @@
+@font-face {
+  font-display: block;
+  font-family: "bootstrap-icons";
+  src: url("./fonts/bootstrap-icons.woff2?1fa40e8900654d2863d011707b9fb6f2") format("woff2"),
+    url("./fonts/bootstrap-icons.woff?1fa40e8900654d2863d011707b9fb6f2") format("woff");
+}
+
+.bi::before,
+[class^="bi-"]::before,
+[class*=" bi-"]::before {
+  display: inline-block;
+  font-family: bootstrap-icons !important;
+  font-style: normal;
+  font-weight: normal !important;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  vertical-align: -.125em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+
 .markerHeaderDiv {
   display: flex;
 }
@@ -98,13 +121,10 @@ body {
   border-width: 1px;
 }
 
-
-
 .verticalAlign {
   display: flex;
   text-align: center;
 }
-
 
 .highlight * {
   font-size: 2rem;
@@ -135,7 +155,6 @@ body {
   padding: 20px;
 }
 
-
 /* Sidebar styles overrides*/
 .leaflet-sidebar-header {
   background-color: rgba(0, 116, 217, 0.5) !important;
@@ -156,14 +175,68 @@ body {
 
 /* Leaflet.Draw style overrides */
 .leaflet-draw-toolbar a {
-  background-image: url("spritesheet-light.png") !important;
+  background-image: url("spritesheet-empty.png") !important;
   background-color: rgba(10, 10, 10, 0.9) !important;
 }
 
-/* Leaflet.Draw style overrides */
 .leaflet-draw-actions a {
   background-color: rgba(145, 145, 145, 0.9) !important;
 }
+
+/*
+  * Draw toolbar icons.
+  */
+
+  .leaflet-draw-toolbar .leaflet-draw-draw-polyline::after {
+    font-family: "bootstrap-icons";
+    content: "\f52d";
+  }
+
+  .leaflet-draw-toolbar .leaflet-draw-draw-polygon::after {
+    font-family: "bootstrap-icons";
+    content: "\f4cc";
+  }
+
+.leaflet-draw-toolbar .leaflet-draw-draw-rectangle::after {
+  font-family: "bootstrap-icons";
+  content: "\f582";
+}
+
+.leaflet-draw-toolbar .leaflet-draw-draw-marker::before {
+  font-family: "bootstrap-icons";
+  content: "\f3e7";
+}
+
+.leaflet-draw-toolbar .leaflet-draw-draw-circle::before {
+  font-family: "bootstrap-icons";
+  content: "\f287";
+}
+
+.leaflet-draw-toolbar .leaflet-draw-draw-circlemarker::after {
+  font-family: "bootstrap-icons";
+  content: "\f28a";
+}
+
+.leaflet-draw-toolbar .leaflet-draw-edit-edit::before {
+  font-family: "bootstrap-icons";
+  content: "\f4ca";
+}
+
+.leaflet-draw-toolbar .leaflet-draw-edit-remove::before {
+  font-family: "bootstrap-icons";
+  content: "\f5dd";
+}
+
+.leaflet-draw-toolbar .leaflet-draw-edit-edit.leaflet-disabled::before {
+  font-family: "bootstrap-icons";
+  content: "\f4ca";
+}
+
+.leaflet-draw-toolbar .leaflet-draw-edit-remove.leaflet-disabled::before {
+  font-family: "bootstrap-icons";
+  content: "\f5dd";
+}
+
 
 /* Leaflet style overrides */
 

@@ -3,11 +3,10 @@
 
 import * as vscode from 'vscode';
 import { SidebarProvider } from './SidebarProvider';
-import { getHtmlForWebview, replace } from './Template';
-import { createSettings, readSettings, saveSettings } from './Settings';
 import { Core } from './Core';
 import { InteractiveMapSerializer } from './InteractiveMapSerializer';
 import { MapManager } from './MapManager';
+import { VersionManager } from './webview/Version';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -18,7 +17,8 @@ export function activate(this: any, context: vscode.ExtensionContext) {
 	}
 
 	// Register the Sidebar Panel
-	let mapManager = new MapManager(context);
+	let versionManager = new VersionManager();
+	let mapManager = new MapManager(context, versionManager);
 	let  sidebarProvider = new SidebarProvider(context.extensionUri, mapManager);
 	
 
