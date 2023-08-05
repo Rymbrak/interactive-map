@@ -1,27 +1,85 @@
-.btn {
+@font-face {
+    font-display: block;
+    font-family: "bootstrap-icons";
+    src: url("./fonts/bootstrap-icons.woff2?1fa40e8900654d2863d011707b9fb6f2") format("woff2"),
+        url("./fonts/bootstrap-icons.woff?1fa40e8900654d2863d011707b9fb6f2") format("woff");
+}
+
+.recentEntry {
     margin: 5px;
     padding: 0px;
     background-color: rgb(50, 50, 50);
     background-size: cover;
     border: none;
-    color:  whitesmoke;
+    color: whitesmoke;
 
 }
-.img {
-    display:block;
-    width:100%; 
+
+/*
+ * Used for preview images in the recent maps lists.
+ */
+.recentImg {
+    display: block;
+    width: 100%;
     max-height: 200px;
     object-fit: cover;
 }
 
-.btn :hover {
+
+/*
+ * Highlights hovered buttons in the recent maps lists.
+ */
+.recentEntry :hover {
     filter: brightness(120%);
 }
+
+/*
+ * Highlights hovered buttons in the activity bar window.
+ */
+.entry:hover {
+    background-color: rgba(120, 120, 120, 0.25);
+}
+
 .header {
-position: fixed;
+    position: fixed;
 
 }
 
-.recentDiv{
+.recentDiv {
     top: 200px;
+}
+
+/*
+ * Used for buttons in the activity bar window. (Such as Create Map and Open Map)
+ */
+.entry {
+    width: 100%;
+    margin: 0px;
+    padding: 0px;
+    text-align: left;
+    border-style: none;
+    background-color: rgba(50, 50, 50, 0);
+    color: whitesmoke;
+}
+
+/*
+  * Adds an icon before buttons
+  */
+.entry:before {
+    font-family: "bootstrap-icons";
+    content: "\f132";
+    font-style: normal;
+    font-weight: normal;
+    font-variant: normal;
+    text-transform: none;
+    line-height: 1;
+    position: relative;
+    -webkit-font-smoothing: antialiased;
+}
+
+/*
+  * Details element used in the activity bar window. Use an indent, since it is  listed with other workspaces in a details element.
+  */
+.recentWorkspace {
+    margin-left: 10px;
 }

@@ -17,10 +17,18 @@ class ActivityBar {
      * Creates listeners for buttons in the activity bar.
      */
     addListeners() {
-        let element = document.getElementById("createMap");
-        element?.addEventListener("click", (e) => {
+
+        let createButton = document.getElementById("createMap");
+        createButton?.addEventListener("click", (e) => {
             this.vscode.postMessage({
                 command: 'createMap',
+            });
+        });
+
+        let openButton = document.getElementById("openMap");
+        openButton?.addEventListener("click", (e) => {
+            this.vscode.postMessage({
+                command: 'openMap',
             });
         });
     }
@@ -29,16 +37,17 @@ class ActivityBar {
      * Tells the extension to load a map at the given path.
      * @param {*} path Path for the map. (Provided by the sidebar buttons.)
      */
-    loadMap(path: string) {
+    loadMap(workspace: string, path: string) {
 
         this.vscode.postMessage({
             command: 'open',
+            workspace: workspace,
             path: path
         });
     }
 
     /**
-     * Queries the extension for the settings file to refresh the sidebar content.
+     *Tells the extension to refresh the activity bar window.
      */
     async refresh() {
 
@@ -48,51 +57,85 @@ class ActivityBar {
     }
 
     /**
-     * Generates HTML with buttons for every recently opened map.
-     * @param {*} data 
+     * Refreshes the sidebar content and adds listeners to each entry.
+     * @param {*} settings List of all Interactive Map Settings files in the workspaces as json.
+     */
+    updateContent(workspaces: string[], settingsArray: settings[], images: string[][]) {
+
+        let content = document.getElementById("content");
+        /**
+         * Clear the innerHTML in case we have dangling elements from a previous start.
+         * We don't keep any references to the listeners of respective buttons, the the GC should take care of them.
+         */
+        if (content) {
+            content.innerHTML = "";
+        }
+
+        let index = 0;
+        let btnCount = 0;
+
+        /**
+         * Create an entry for each workspace with a settings file and populate it.
+         */
+        for (let workspace of workspaces) {
+
+            /**
+             * Create foldable summary to host all entries for a workspace.
+             */
+            let wf = document.createElement("details");
+            wf.className = "recentWorkspace";
+            wf.setAttribute("open", "true");
+            let summary = document.createElement("summary");
+            summary.textContent = workspaces[index];
+            wf.appendChild(summary);
+            content?.appendChild(wf);
+
+            /**
+             * Create entries for every map stored in the workspaces respective settings file.
+             * Each entry will have a button that loads the map on click along with images used as preview.
+             */
+            let settings = settingsArray[index];
+            let data: string[] = settings.recent.slice(0, settings.recentMax);
+            btnCount = this.createRecentEntries(wf, workspace, btnCount, data, images[index]);
+            index++;
+        }
+
+    }
+
+    /**
+     * Generates HTML containing buttons for every recently opened map in the provided settings file.
+     * @param {*} data Recent entries from a settings file.
      * @returns  HTML strings for buttons.
      */
-    getRecent(data: any[], images: string[]) {
+    createRecentEntries(root: HTMLElement | null, workspace: string, btnCount: number, data: string[], images: string[]) {
 
-        var content = "";
-        let index = 0;
+        if (root) {
 
-        data.forEach((element) => {
-            content += '<button class ="btn" id="btn' + index + '">' +
-                '<img class="img" nonce="' + this.nonce + '" src=' + images[index] + ' />' +
-                element.replace(".json", "") +
-                "</button>";
-            index++;
-        });
+            let index = 0;
 
-        return content;
-    }
+            for (const element of data) {
 
-    /**
-     * Refreshes the sidebar content and adds listeners to each entry.
-     * @param {*} settings  Interactive Map Settings file as json.
-     */
-    updateContent(settings: settings, images: string[]) {
+                let button = document.createElement("button");
+                let image = document.createElement("img");
 
-        this.updateHTML(this.getRecent(settings.recent, images));
+                button.className = "recentEntry";
+                button.id = "recentEntry" + btnCount;
 
-        let index = 0;
-        settings.recent.forEach(element => {
-            document.getElementById("btn" + index)?.addEventListener("click", (e) => this.loadMap(element));
-            index++;
-        });
-    }
+                image.className = "recentImg";
+                image.setAttribute("nonce", this.nonce);
+                image.src = images[index];
+                button.textContent = data[index].replace(".json", "");
 
-    /**
-     * Replaces the sidebar content with the given content.
-     * @param {*} html  HTML content for the sidebar element.
-     */
-    updateHTML(html: string) {
+                button.appendChild(image);
+                root.appendChild(button);
 
-        let elem = document.getElementById("content");
-        if (elem !== null) {
-            elem.innerHTML = html;
+                button.addEventListener("click", (e) => this.loadMap(workspace, element));
+                btnCount++;
+                index++;
+            }
+
         }
+        return btnCount;
     }
 
 }

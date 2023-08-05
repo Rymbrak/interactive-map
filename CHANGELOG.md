@@ -1,5 +1,18 @@
 # Change Log
 
+## 0.3.0
+
+- 'Create Map' now uses a file save dialog.
+- Added a button to open maps more conveniently with a file open dialog.
+- You can now limit how many recently opened maps are shown in the interactive-map.json.
+- Added support for multi-root workspaces. Each workspace has its own settings file and entries in the activity bar.
+
+Other:
+
+- Added some missing documentation.
+- Functions were adapted for multi-root workspaces.
+- Icon now uses same color as the rest of the UI.
+
 ## 0.2.1
 
 - The Activity Bar entry now has a button for creating new maps.

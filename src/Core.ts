@@ -27,7 +27,7 @@ export class Core {
     /**
      * Filepath of the current map. Used for opening or saving the map.
      */
-    fileName: string = "";
+    fileUri: vscode.Uri | undefined;
     /**
      * Bool for panel state.
      */
@@ -83,44 +83,21 @@ export class Core {
     }
 
     /**
- * Asks a user for a path to a map file excluding the extension name, reads the file if it exists and tells the panel to display it.
+ * Provides the user with a file dialog to open a map. The selected file is read and displayed in the webview.
+ * Does nothing if the file is not a map.
  * @param context Extension context provided by the extension.
  * @returns  An error if there is no workspace. Otherwise nothing is returned.
  */
     async openMap(context: vscode.ExtensionContext) {
 
+        let filters = {
+            'JSON': ['json']
+        };
+
+        let file: vscode.Uri[] | undefined = await vscode.window.showOpenDialog({ canSelectMany: false , filters: filters });
+
         if (!vscode.workspace.workspaceFolders) {
             return vscode.window.showInformationMessage('No folder or workspace opened');
-        }
-
-        if (!this.panel || this.isDisposed) {
-            this.panel = this.createPanel(context);
-        }
-
-        try {
-            const selectedText = "";
-            this.fileName = await vscode.window.showInputBox({
-                placeHolder: "Map Name",
-                prompt: "Enter name of the map to open.",
-                value: selectedText
-            }) + '.json' ?? "";
-            await this.open(context);
-        } catch (error) {
-            return vscode.window.showInformationMessage('Map does not exist.');
-        }
-    }
-
-    /**
-     * Opens the currently active map.
-     * @param context Extension context provided by the extension.
-      * @returns  An error if there is no workspace. Otherwise nothing is returned.
-     */
-    async open(context: vscode.ExtensionContext) {
-
-        if (!vscode.workspace.workspaceFolders) {
-
-            vscode.window.showInformationMessage('No folder or workspace opened');
-            return;
         }
         const wf = vscode.workspace.workspaceFolders[0].uri;
 
@@ -128,45 +105,78 @@ export class Core {
             this.panel = this.createPanel(context);
         }
 
-        let json = await this.mapManager.readMap(this.fileName, context);
-        const path = vscode.Uri.joinPath(wf, this.fileName);
+        if (file) {
 
-        if (json === undefined) {
-            /**
-             * The map file doesn't exist, so we delete it from the recent entry.
-             */
-            this.removeRecent(this.fileName);
+            try {
+
+                this.fileUri = file[0];
+
+                await this.open(context, file[0]);
+            } catch (error) {
+                return vscode.window.showInformationMessage('Map does not exist.');
+            }
+        }
+    }
+
+    /**
+     * Opens the provided map file.
+     * @param context Extension context provided by the extension.
+      * @returns  An error if there is no workspace. Otherwise nothing is returned.
+     */
+    async open(context: vscode.ExtensionContext, path: vscode.Uri) {
+
+        if (!vscode.workspace.workspaceFolders) {
+
+            vscode.window.showInformationMessage('No folder or workspace opened');
             return;
         }
 
-        this.mapPath = json["mapPath"];
-        let imagePath = "";
+        const wf = vscode.workspace.getWorkspaceFolder(path)?.uri;
+        if (wf) {
 
-        /**
-         * If the background image path is empty, we just pass an empty string, which will be resolved to the empty background placeholder.
-         */
-        if (this.mapPath !== "") {
-            imagePath = this.panel.webview.asWebviewUri(vscode.Uri.joinPath(wf, this.mapPath)).toString();
+            if (!this.panel || this.isDisposed) {
+                this.panel = this.createPanel(context);
+            }
+
+            let json = await this.mapManager.readMap(path, context);
+            let name = path.path.replace(wf.path + "/", "");
+
+            if (json === undefined) {
+                /**
+                 * The map file doesn't exist, so we delete it from the recent entry.
+                 */
+                this.removeRecent(path, name);
+                return;
+            }
+
+            this.mapPath = json["mapPath"];
+            let imagePath = "";
+
+            /**
+             * If the background image path is empty, we just pass an empty string, which will be resolved to the empty background placeholder.
+             */
+            if (this.mapPath !== "") {
+                imagePath = this.panel.webview.asWebviewUri(vscode.Uri.joinPath(wf, this.mapPath)).toString();
+            }
+            const layers = json["layers"];
+            const bounds = json["bounds"];
+
+            // Send a message to our webview.
+            // You can send any JSON serializable data.
+            this.panel.webview.postMessage({ command: 'openMap', path, imagePath, bounds, layers });
+
+            await this.addRecent(path, name);
         }
-        const layers = json["layers"];
-        const bounds = json["bounds"];
-
-        let fileName = this.fileName;
-
-        // Send a message to our webview.
-        // You can send any JSON serializable data.
-        this.panel.webview.postMessage({ command: 'openMap', path, imagePath, bounds, layers, fileName });
-        await this.addRecent(this.fileName);
-
     }
 
     /**
      * Removes the given entry from the recent map list and saves the settings.
      * @param path Path to add to the recently opened map list.
      */
-    async removeRecent(path: string) {
+    async removeRecent(uri: vscode.Uri, path: string) {
 
-        let settings = await readSettings();
+        let wfName = vscode.workspace.getWorkspaceFolder(uri)?.name;
+        let settings = await readSettings(wfName);
 
         if (settings === null) {
             /**
@@ -180,7 +190,7 @@ export class Core {
             settings.recent.splice(settings.recent.indexOf(path), 1);
         }
 
-        await saveSettings(JSON.stringify(settings, null, 2));
+        await saveSettings(JSON.stringify(settings, null, 2), wfName);
 
         this.sidebarProvider.refreshActivityBar();
     }
@@ -189,9 +199,10 @@ export class Core {
      * Updates the recently opened map list and saves the settings.
      * @param path Path to add to the recently opened map list.
      */
-    async addRecent(path: string) {
+    async addRecent(uri: vscode.Uri, path: string) {
 
-        let settings = await readSettings();
+        let wfName = vscode.workspace.getWorkspaceFolder(uri)?.name;
+        let settings = await readSettings(wfName);
 
         if (settings === null) {
             /**
@@ -206,7 +217,7 @@ export class Core {
         } else {
             settings.recent.unshift(path);
         }
-        await saveSettings(JSON.stringify(settings, null, 2));
+        await saveSettings(JSON.stringify(settings, null, 2), wfName);
 
         this.sidebarProvider.refreshActivityBar();
     }
@@ -224,7 +235,11 @@ export class Core {
                         case 'save':
                             var result = message.text;
                             result.mapPath = this.mapPath;
-                            this.saveMap(this.fileName, JSON.stringify(result));
+
+                            if (this.fileUri) {
+
+                                this.saveMap(this.fileUri, JSON.stringify(result));
+                            }
                             return;
                         case 'refresh':
                             if (this.panel) {
@@ -233,12 +248,20 @@ export class Core {
                             return;
                         case 'image':
                             this.createImgFolder();
-                            this.saveImage(message.image, message.name);
-                            this.mapPath = this.imgFolderName + "/" + message.name;
-                            this.refresh = true;
-                            this.saveCall();
-                            return;
+                            /**
+                             * We can grab the workspace from the currently open map. A map should be open, since this is would only be called through the interactive map view's sidebar.
+                             */
+                            if (this.fileUri) {
+                                let workspace = vscode.workspace.getWorkspaceFolder(this.fileUri)?.uri;
 
+                                if (workspace) {
+                                    this.saveImage(workspace, message.image, message.name);
+                                    this.mapPath = this.imgFolderName + "/" + message.name;
+                                    this.refresh = true;
+                                    this.saveCall();
+                                }
+                            }
+                            return;
                     }
                 },
                 undefined,
@@ -271,13 +294,20 @@ export class Core {
         }
     }
 
-    async saveImage(image: ArrayBuffer, name: string) {
+    /**
+     * Saves the given image under the given name in the image folder, used for previous on the activity bar.
+     * Overwrites files with the same name.
+     * @param image Image as ArrayBuffer
+     * @param name Name for the file.
+     * @returns 
+     */
+    async saveImage(workspace: vscode.Uri, image: ArrayBuffer, name: string) {
 
         if (!vscode.workspace.workspaceFolders) {
             return vscode.window.showInformationMessage('No folder or workspace opened');
         }
-        const wf = vscode.workspace.workspaceFolders[0].uri;
-        const path = vscode.Uri.joinPath(wf, this.imgFolderName, name);
+
+        const path = vscode.Uri.joinPath(workspace, this.imgFolderName, name);
 
         await vscode.workspace.fs.writeFile(path, new Uint8Array(image));
     }
@@ -294,38 +324,49 @@ export class Core {
         this.panel.webview.postMessage({ command: 'saveMap' });
     }
 
-    // Creates and saves a map file for the given name and data.
-    async saveMap(fileName: string, data: string) {
+    /**
+     * Creates and saves a map file with the provided data at the given path.
+     * @param fileName  Relative path of the file.
+     * @param data Content for the file.
+     */
+    async saveMap(file: vscode.Uri, data: string) {
 
-        await this.mapManager.saveMap(fileName, data);
+        await this.mapManager.saveMap(file, data);
         if (this.refresh) {
             this.refresh = false;
-            this.open(this.extensionContext);
+            this.open(this.extensionContext, file);
         }
     }
 
-
-    // Asks the user for a name and creates a new map file.
+    /**
+     * Asks the user for a name and creates a new map file.
+     * @returns 
+     */
     async createMap() {
 
-        let selectedText: string | undefined;
-        selectedText = await vscode.window.showInputBox({
-            placeHolder: "Map Name",
-            prompt: "Enter a name for the map",
-            value: selectedText
-        });
-        this.fileName = selectedText  + '.json' ?? "";
+        let filters = {
+            'JSON': ['json']
+        };
 
-        /**
-         * Either the prompt was cancelled or an empty string was passed, so we do not create a file.
-         */
-        if (selectedText) {
-            this.fileName = selectedText  + '.json';
+        let file: vscode.Uri | undefined = await vscode.window.showSaveDialog({ filters: filters , title: "Enter a file name (no extension needed)" });
+
+        if (!vscode.workspace.workspaceFolders) {
+            return vscode.window.showInformationMessage('No folder or workspace opened');
+        }
+        const wf = vscode.workspace.workspaceFolders[0].uri;
+
+        if (file) {
+            file = vscode.Uri.file(file.path + ".json");
+            this.fileUri = file;
             let data = this.mapManager.generateMap();
 
-            await this.saveMap(this.fileName, data);
-            this.open(this.extensionContext);
+            await this.saveMap(file, data);
+            this.open(this.extensionContext, file);
         }
+
+        /**
+        * Either the prompt was cancelled or an empty string was passed, so we do not create a file.
+        */
     }
 
 }

@@ -2,7 +2,7 @@
   "name": "interactive-map",
   "displayName": "Interactive Map",
   "description": "Interactive map based on Leaflet. Place markers with descriptions, paths and draw regions. Use custom images for maps.",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "publisher": "Rymbrak",
   "engines": {
     "vscode": "^1.75.0"

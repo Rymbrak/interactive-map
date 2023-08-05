@@ -19,8 +19,8 @@ export function activate(this: any, context: vscode.ExtensionContext) {
 	// Register the Sidebar Panel
 	let versionManager = new VersionManager();
 	let mapManager = new MapManager(context, versionManager);
-	let  sidebarProvider = new SidebarProvider(context.extensionUri, mapManager);
-	
+	let sidebarProvider = new SidebarProvider(context.extensionUri, mapManager);
+
 
 	context.subscriptions.push(
 		vscode.window.registerWebviewViewProvider(
@@ -55,10 +55,24 @@ export function activate(this: any, context: vscode.ExtensionContext) {
 	/**
 	 * Internal command for opening maps by path.
 	 */
-	let disposable4 = vscode.commands.registerCommand('interactive-map.open', async (file) => {
+	let disposable4 = vscode.commands.registerCommand('interactive-map.open', async (workspace, path) => {
 
-		core.fileName = file;
-		core.open(context);;
+		const wf = vscode.workspace.workspaceFolders?.find(i => i.name === workspace);
+		if(wf){
+			core.fileUri = vscode.Uri.joinPath(wf.uri, path);
+		core.open(context, core.fileUri);
+	}
+	});
+
+	let disposable6 = vscode.commands.registerCommand('interactive-map.getWorkspace', async (file) => {
+
+		let documentUri = vscode.window.activeTextEditor?.document.uri;
+
+		if (documentUri) {
+			let wf = vscode.workspace.getWorkspaceFolder(documentUri);
+			return wf;
+		}
+		return undefined;
 	});
 
 	context.subscriptions.push(disposable);

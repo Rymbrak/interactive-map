@@ -2,6 +2,8 @@ import * as vscode from "vscode";
 import { readSettings } from "./Settings";
 import { getHtmlForActivityBar } from "./Template";
 import { IMapManager } from "./webview/Interfaces/IMapManager";
+import { Settings } from "http2";
+import { log } from "console";
 
 export class SidebarProvider implements vscode.WebviewViewProvider {
     _view?: vscode.WebviewView;
@@ -47,12 +49,24 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                 }
                 case "open": {
 
-                    vscode.commands.executeCommand('interactive-map.open', message.path);
+                    vscode.commands.executeCommand('interactive-map.open', message.workspace, message.path);
                     break;
                 }
                 case 'createMap': {
 
                     vscode.commands.executeCommand('interactive-map.createMap');
+                    break;
+                }
+                case 'openMap': {
+
+                    vscode.commands.executeCommand('interactive-map.openMap');
+                    break;
+                }
+                case 'getWorkspace': {
+
+                    let wf: vscode.WorkspaceFolder = await vscode.commands.executeCommand('interactive-map.getWorkspace');
+                    let name = wf.name;
+                    this._view?.webview.postMessage({ command: 'workspace', name });
                     break;
                 }
             }
@@ -64,13 +78,42 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     }
 
     async refreshActivityBar() {
-        let settings = await readSettings();
-        let images: string[] | undefined = [];
-        if (settings && this._view) {
-            images = await this.mapManager.getImages(settings.recent, this._view?.webview);
+
+        let folders = vscode.workspace.workspaceFolders;
+        let workspaces: string[] = [];
+        let settingsArray: settings[] = [];
+        let imageArray: string[][] = [];
+
+        if (folders) {
+
+            for (let folder of folders) {
+
+                let settings = await readSettings(folder.name);
+
+                /**
+                 * We only care about workspaces that have settings files.
+                 */
+                if (settings) {
+
+                    workspaces.push(folder.name);
+                    settingsArray.push(settings);
+                    let images: string[] | undefined = [];
+
+                    if (this._view) {
+                        images = await this.mapManager.getImages(folder, settings.recent, this._view?.webview);
+                        
+                        if (images) {
+                            imageArray.push(images);
+                        } else {
+                            imageArray.push([]);
+                        }
+                    }
+                }
+            }
+
         }
 
-        this._view?.webview.postMessage({ command: 'refresh', settings, images });
+        this._view?.webview.postMessage({ command: 'refresh', workspaces, settingsArray, imageArray });
     }
 
 }

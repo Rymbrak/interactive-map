@@ -21,7 +21,7 @@
             const message = event.data; // The JSON data our extension sent
             switch (message.command) {
                 case 'refresh':
-                    activityBar.updateContent(message.settings, message.images);
+                    activityBar.updateContent(message.workspaces, message.settingsArray, message.imageArray);
                     break;
             }
         });
@@ -30,15 +30,18 @@
 </head>
 
 <body>
-    <button id="createMap">
+    <button id="createMap" class="entry">
         Create Map
+    </button>
+    <button id="openMap" class="entry">
+        Open Map
     </button>
     <hr>
     <details open="true">
         <summary>Recently Used</summary>
         <div class="recentDiv" id="content">
+        </div>
     </details>
-    </div>
     <script nonce="${nonce}">
         activityBar.refresh();
         activityBar.addListeners();

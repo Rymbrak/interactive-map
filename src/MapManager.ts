@@ -26,14 +26,12 @@ export class MapManager implements IMapManager {
     }
 
     // Creates and saves a map file for the given name and data.
-    async saveMap(fileName: string, data: string) {
+    async saveMap(path: vscode.Uri, data: string) {
 
         if (!vscode.workspace.workspaceFolders) {
             return vscode.window.showInformationMessage('No folder or workspace opened');
         }
-
-        const wf = vscode.workspace.workspaceFolders[0].uri;
-        const path = vscode.Uri.joinPath(wf, fileName);
+ 
         const writeData = Buffer.from(data, 'utf8');
 
         await vscode.workspace.fs.writeFile(path, writeData);
@@ -106,7 +104,7 @@ export class MapManager implements IMapManager {
      * @param context VSCode Extension context.
      * @returns  a mapFile if the file is valid, otherwise undefined.
      */
-    async readMap(fileName: string) {
+    async readMap(path: vscode.Uri) {
 
         let json: mapFile;
 
@@ -115,9 +113,7 @@ export class MapManager implements IMapManager {
             vscode.window.showInformationMessage('No folder or workspace opened');
             return;
         }
-
-        const wf = vscode.workspace.workspaceFolders[0].uri;
-        const path = vscode.Uri.joinPath(wf, fileName);
+        
         let content: string;
 
         try {
@@ -135,19 +131,12 @@ export class MapManager implements IMapManager {
         return json;
     }
 
-    async getImages(mapNames: string[], webview: vscode.Webview) {
+    async getImages(wf: vscode.WorkspaceFolder, mapNames: string[], webview: vscode.Webview) {
 
         let result: string[] = [];
 
-        if (!vscode.workspace.workspaceFolders) {
-            vscode.window.showInformationMessage('No folder or workspace opened');
-            return undefined;
-        }
-
-        const wf = vscode.workspace.workspaceFolders[0].uri;
-
         for (let i = 0; i < mapNames.length; i++) {
-            let element = mapNames[i];
+            let element = vscode.Uri.joinPath(wf.uri,mapNames[i]);
 
             let map: mapFile | undefined = await this.readMap(element);
             if (map === undefined || map?.mapPath === "") {
@@ -155,7 +144,7 @@ export class MapManager implements IMapManager {
                 continue;
             }
 
-            result.push(webview.asWebviewUri(vscode.Uri.joinPath(wf, map.mapPath)).toString());
+            result.push(webview.asWebviewUri(vscode.Uri.joinPath(wf.uri, map.mapPath)).toString());
         }
 
         return result;

@@ -17,9 +17,9 @@ export class InteractiveMapSerializer implements vscode.WebviewPanelSerializer {
 
 		this.core.addMessageListeners();
 
-		this.core.fileName = state;
+		this.core.fileUri = state;
 		if (state) {
-			this.core.open(this.core.extensionContext);
+			this.core.open(this.core.extensionContext, state);
 		}
 	}
 }

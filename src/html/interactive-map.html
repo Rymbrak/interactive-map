@@ -46,7 +46,7 @@
                         map.setMap('${emptyMap}', [message.bounds[0], message.bounds[1]]);
                     }
                     map.load(message.layers);
-                    vscode.setState(message.fileName);
+                    vscode.setState(message.path);
                     break;
                 case 'saveMap':
                     map.saveManager.saveMap();

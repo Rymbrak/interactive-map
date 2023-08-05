@@ -1,6 +1,6 @@
 # Interactive Map
 
-![feature X](media/preview.png)
+![features](media/preview.png)
 
 ## Features
 
@@ -16,3 +16,8 @@ Supported feature layers:
 - Circles
 
 Maps can be created from the activity bar icon, which also lists recently opened maps.
+Multi-root workspaces are supported, map files should be located inside a workspace to be recognized.
+
+Images used for maps are stored inside the interactive-map folder of the corresponding workspace, moving that and the json, along with the map files is enough to use them in another workspace.
+
+Feedback and feature requests are appreciated.
