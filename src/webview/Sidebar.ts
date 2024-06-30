@@ -1,4 +1,6 @@
 import * as L from 'leaflet';
+import { Integration } from '../integration/Tokenizer';
+import { IconBrowser } from './IconBrowser';
 
 export module Sidebar {
 
@@ -11,9 +13,11 @@ export module Sidebar {
 
         sidebar: L.Control.Sidebar;
         iconManager: IIconManager;
+        iconBrowser: IconBrowser.IconBrowser;
         layerManager: ILayerManager;
         saveManager: ISaveManager;
         mapUtilities: IFeatureUtilities;
+        helpPanel: IHelpPanel;
 
         sidebarPolylineId = "polylines";
         sidebarPolylineTitle = "Polylines";
@@ -37,9 +41,13 @@ export module Sidebar {
         sidebarSettingsTitle = "Settings";
 
         highlight: HTMLElement | undefined;
+        highlightIcon: string = "";
         highlightLayer: string = "";
+        highlightIndex: number = -1;
 
-        constructor(vscode: any, map: L.Map, iconManager: IIconManager, layerManager: ILayerManager, saveManager: ISaveManager, mapUtilities: IFeatureUtilities) {
+        tokenizer = new Integration.Tokenizer();
+
+        constructor(vscode: any, map: L.Map, iconManager: IIconManager, iconBrowser: IconBrowser.IconBrowser, layerManager: ILayerManager, saveManager: ISaveManager, mapUtilities: IFeatureUtilities, helpPanel: IHelpPanel) {
 
             this.vscode = vscode;
             this.sidebar = L.control.sidebar({
@@ -48,9 +56,11 @@ export module Sidebar {
             }).addTo(map);
 
             this.iconManager = iconManager;
+            this.iconBrowser = iconBrowser;
             this.layerManager = layerManager;
             this.saveManager = saveManager;
             this.mapUtilities = mapUtilities;
+            this.helpPanel = helpPanel;
 
             /**
              * Create panels for the sidebar. Order of creation is the same order they appear in.
@@ -64,17 +74,14 @@ export module Sidebar {
             this.createFeaturePanel("circlemarker", "circle marker", this.sidebarCircleMarkerId, this.sidebarCircleMarkerTitle);
 
             this.createSettingsPanel();
+            /**
+             * Panel with additional information on general use.
+             */
+            this.createPanel("help", this.iconManager.getIcon("help", ""), this.helpPanel.getContent(), "Help");
+            this.requestHtml("help-general");
         }
 
-        /**
-         * Creates a panel entry in the sidebar.
-         * 
-         * Panels can be accessed from the sidebar through the icon and contain a header alongside content in html.
-         * @param id UID used to access the panel. Any string can be used, as long as it is unique.
-         * @param icon  Icon for the sidebar, passed as html string.
-         * @param content  Panel content passed as html string.
-         * @param title Title of the panel page.
-         */
+
         createPanel(id: string, icon: string, content: string, title: string) {
 
             let panelContent = {
@@ -132,6 +139,36 @@ export module Sidebar {
             document.getElementById("dropBackground")?.addEventListener("dragenter", (e) => this.allowDrop(e), false);
         }
 
+
+        requestHtml(path: string) {
+            this.vscode.postMessage({
+                command: 'requestHtml',
+                name: path
+            });
+        }
+
+        async setHelpPanel(html: string): Promise<void> {
+
+            /**
+             * The base tokenizer has a definition for bootstrap icons that we can use to insert them into the html.
+             */
+            let text = await this.tokenizer.combine(this.tokenizer.getTokens(html), true);
+            this.updatePane("help", "Help", text);
+        }
+
+        updatePane(id: string, name: string, content: string): void {
+
+            let header = "";
+            header += '<h1 class="leaflet-sidebar-header">' + name;
+            header += '<span class="leaflet-sidebar-close"><i class="fa fa-caret-' + this.sidebar.options.position + '"></i></span>';
+            header += '</h1>';
+            var pane = this.getPane(id);
+            /**
+             * panelContent allows scrolling.
+             */
+            pane.innerHTML = header + '<p class="panel">' + '<div class="panelContent">' + content + '</div>' + '  </p>';
+        }
+
         allowDrop(ev: any) {
             ev.preventDefault();
         }
@@ -181,10 +218,6 @@ export module Sidebar {
             });
         }
 
-        /**
-         * Function to (re)create panes in the sidebar for each tracked feature type.
-         * These panes contain entries for each feature of the matching type, which allow you to edit their name and description, as well as locating them on the map.
-         */
         populateSidebarFeatures() {
 
             this.populateSidebarFeature(this.sidebarPolylineId, this.sidebarPolylineTitle, "polyline-small", "polyline", "polyline");
@@ -209,9 +242,22 @@ export module Sidebar {
             let layers = this.layerManager.getLayer(layer).getLayers();
 
             layers.forEach((element: any) => {
+
+                let custom = false;
+                let actualIcon = headerIcon;
+                /**
+                 * Check whether a source for the icon exists and use it in that case.
+                 * Otherwise we use the standard icon.
+                 */
+                if (element.feature.properties.src && element.feature.properties.src !== "") {
+
+                    actualIcon = this.iconManager.makeImage(element.feature.properties.src, element.feature.properties.color);
+                    custom = true;
+                }
+
                 entries += '<div class="markerEntryBox">' +
                     '<div class="markerHeaderDiv">' +
-                    this.sidebarMarkerHeaderButton(layer, index, headerIcon) +
+                    this.sidebarMarkerHeaderButton(layer, index, actualIcon, custom) +
                     this.sidebarMarkerHeader(layer, element.feature.properties.name, index) +
                     this.sidebarMarkerIdHeader(element._leaflet_id) +
                     '</div>' +
@@ -228,14 +274,9 @@ export module Sidebar {
 
             entries = '<div class="panelContent">' + entries + '</div>';
 
-            this.updatePane(id, title, layer, entries);
+            this.updateFeaturePane(id, title, layer, entries);
         }
 
-        /**
-         * Returns the panel with the given id.
-         * @param {*} id Id of the panel.
-         * @returns  A panel, otherwise throws an error.
-         */
         getPane(id: string) {
 
             for (let i = 0; i < this.sidebar._panes.length; i++) {
@@ -246,13 +287,7 @@ export module Sidebar {
             throw Error('Pane "' + id + '" not found');
         }
 
-        /**
-         *  Update the content of a pane with the given id.
-         * @param {*} id Id of the panel to update.
-         * @param {*} name Title of the Pane
-         * @param {*} entries HTML content to use for updating.
-         */
-        updatePane(id: string, name: string, layer: string, entries: string) {
+        updateFeaturePane(id: string, name: string, layer: string, entries: string) {
 
             var content = '';
             content += '<h1 class="leaflet-sidebar-header">' + name;
@@ -293,10 +328,11 @@ export module Sidebar {
          * @param {*} index Index of the marker in markerLayer.
          * @returns A HTML string.
          */
-        sidebarMarkerHeaderButton(layer: string, index: number, icon: string) {
+        sidebarMarkerHeaderButton(layer: string, index: number, icon: string, custom: boolean) {
 
+            let iconBody = custom ? icon : this.iconManager.getIcon(icon, "");
             return '<button id="' + layer + 'Button' + index + '" class ="btn">' +
-                this.iconManager.getIcon(icon, "") +
+                iconBody +
                 '</button>';
         }
 
@@ -328,10 +364,45 @@ export module Sidebar {
                     this.mapUtilities.highlightFeature(layer, number);
                     this.highlightSidebarMarker(layer, number);
                 });
-                document.getElementById(layer + index)?.addEventListener("change", (e) => this.mapUtilities.setFeatureDesc(layer, number));
+                /**
+                 * We can set the icon by right clicking the marker.
+                 */
+                document.getElementById(layer + "Button" + index)?.addEventListener("contextmenu", (e) => {
 
+                    let icon: string = "";
+                    if (this.iconBrowser.currentIcon !== "") {
+                        icon = this.iconManager.makeImage(this.iconBrowser.currentIcon, this.mapUtilities.baseColor);
+                    } else {
+                        icon = this.iconManager.getIcon("marker", "");
+                    }
+
+                    let lIcon = this.iconManager.makeIcon(this.iconBrowser.currentIcon);
+                    this.mapUtilities.setFeatureIcon(layer, number, lIcon, this.iconBrowser.currentIcon);
+                    this.setMarkerIcon(layer, number, icon);
+                    this.saveManager.saveMap();
+
+                    /**
+                     * In case that the marker is the current highlight, we need to update the highlight and highlightIcon
+                     */
+                    if (this.highlightLayer === layer && this.highlightIndex === number && this.highlight) {
+                        this.setMarkerIcon(layer, number, this.toHighlight(icon));
+                        this.highlightIcon = icon;
+                    }
+
+                });
+
+                document.getElementById(layer + index)?.addEventListener("change", (e) => this.mapUtilities.setFeatureDesc(layer, number));
                 index++;
             });
+        }
+
+        setMarkerIcon(layer: string, index: number, icon: string) {
+
+            var feature = document.getElementById(layer + "Button" + index);
+
+            if (feature) {
+                feature.innerHTML = icon;
+            }
         }
 
         /**
@@ -345,19 +416,46 @@ export module Sidebar {
             if (feature) {
 
                 if (this.highlight) {
-                    this.highlight.innerHTML = this.iconManager.getIcon(this.highlightLayer + "-small", "");
+                    /**
+                     * Reset previous highlight
+                     */
+                    this.highlight.innerHTML = this.highlightIcon;
                 }
 
-                feature.innerHTML = this.iconManager.getIcon(layer + "-small", "highlight");
+                //Store current highlight's icon
+                this.highlightIcon = feature.innerHTML;
+                let highlighted = this.toHighlight(feature.innerHTML);
+
+                if (highlighted !== feature.innerHTML) {
+
+                    feature.innerHTML = highlighted;
+                } else {
+
+                    feature.innerHTML = this.iconManager.getIcon(layer + "-small", "highlight");
+                }
 
                 /**
                  * Store current highlighted element and the layer so we can reset their values when the highlight changes.
                  */
                 this.highlight = feature;
                 this.highlightLayer = layer;
+                this.highlightIndex = index;
             }
         }
 
+        /**
+         * Replaces the background color with the highlight color. Used to change svg icons to highlighted variants.
+         * @param icon 
+         * @returns 
+         */
+        toHighlight(icon: string): string {
+            /**
+             * Match any css legal color format: rgb(a) /hsl with word and the rest matches the parentheses content.
+             * The remaining regular expressions are for color names(just a word) and hex colors.
+             */
+            let backgroundColor: RegExp = /background-color: ((\w+\(([^\)]+)\))|\w+|#\w+)/;
+            let backgroundColorHighlight: string = "background-color: yellow;";
+            return icon.replace(backgroundColor, backgroundColorHighlight);
+        }
     }
-
 }

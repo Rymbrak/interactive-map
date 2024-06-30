@@ -47,10 +47,30 @@
                     }
                     map.load(message.layers);
                     vscode.setState(message.path);
-                    break;
+                    return;
                 case 'saveMap':
                     map.saveManager.saveMap();
-                    break;
+                    return;
+                /*
+                 * Set a marker's popup with content from the marker's parsed description.
+                 */
+                case 'parse':
+                    map.mapUtilities.setMarkerPopup(message.layer, message.index, message.text);
+                    return;
+                case 'drawFolders':
+                    map.iconBrowser.setFolderContent(message.folderPaths, message.folderContent);
+                    map.iconBrowser.showHome();
+                return;
+                case 'html':
+
+                    /*
+                    * message.content - Html formatted string.
+                    * message.name - Name of the requested html.
+                    */
+                    if (message.name === "help-general") {
+                        map.sidebarManager.setHelpPanel(message.content)
+                    }
+                    return;
             }
         });
     </script>

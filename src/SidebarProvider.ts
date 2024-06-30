@@ -1,9 +1,7 @@
 import * as vscode from "vscode";
 import { readSettings } from "./Settings";
 import { getHtmlForActivityBar } from "./Template";
-import { IMapManager } from "./webview/Interfaces/IMapManager";
-import { Settings } from "http2";
-import { log } from "console";
+import { IMapManager } from "./interfaces/IMapManager";
 
 export class SidebarProvider implements vscode.WebviewViewProvider {
     _view?: vscode.WebviewView;
@@ -19,7 +17,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
         webviewView.webview.options = {
             // Allow scripts in the webview
-            enableScripts: true,
+            enableScripts: true            
         };
 
         webviewView.webview.html = getHtmlForActivityBar(this._extensionUri, this._view?.webview);
@@ -46,7 +44,8 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
                     await this.refreshActivityBar();
                     break;
-                }
+                }                    
+
                 case "open": {
 
                     vscode.commands.executeCommand('interactive-map.open', message.workspace, message.path);
@@ -110,10 +109,8 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                     }
                 }
             }
-
         }
 
         this._view?.webview.postMessage({ command: 'refresh', workspaces, settingsArray, imageArray });
     }
-
 }

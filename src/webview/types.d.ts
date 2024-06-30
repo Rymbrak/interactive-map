@@ -28,6 +28,8 @@ interface feature {
         desc: string;
         name: string;
         image: any;
+        color: string;
+        src: string;
     };
 
     layerType: string;

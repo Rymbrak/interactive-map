@@ -1,0 +1,52 @@
+<div style="margin: 10px;">
+
+    <h2>
+        General
+    </h2>
+    The map saves automatically after every edit. Images used as backgrounds are stored in the interactive-map folder. You should copy that folder, if you plan to move maps to other workspaces.
+    <br>
+    <br>
+    Holding Shift and selecting an area by dragging allows you to zoom into that area.
+    <br>
+    <br>
+    You can use html tags inside descriptions. The styled text will be visible in the popup windows of
+    clicked features.
+    <hr>
+
+    <h2>
+        Bootstrap Icons
+    </h2>
+    Bootstrap icons can be embedded into descriptions, use &#64(name-of-the-icon).
+    <br>
+    For example:
+    <br>
+    &#64(bi-patch-question-fill) results in @(bi-patch-question-fill).
+    <hr>
+
+    <h2>
+        Dendron
+    </h2>
+    You can use Dendron's note references to access the content of notes.
+    <br>
+    <br>
+    <table>
+        <tr>
+            <td> Note Reference</td>
+            <td>![[note]]</td>
+            <td>Entire content</td>
+        </tr>
+
+        <tr>
+            <td> Block Reference</td>
+            <td>![[note#block-name]]</td>
+            <td> Entire block</td>
+        </tr>
+
+        <tr>
+            <td> Block Range Reference</td>
+            <td>![[note#block-start:#block-end]]</td>
+            <td>All blocks including and between the starting and ending</td>
+        </tr>
+    </table>
+    <br>
+</div>

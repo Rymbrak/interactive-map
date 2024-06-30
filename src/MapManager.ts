@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
-import { IMapManager } from "./webview/Interfaces/IMapManager";
+import { IMapManager } from "./interfaces/IMapManager";
 import { getEmpty } from "./Template";
+import { write } from "fs";
 
 /**
  * Class for manipulating maps. Provides functions to create, read, save and retrieve elements from the maps.
@@ -31,10 +32,16 @@ export class MapManager implements IMapManager {
         if (!vscode.workspace.workspaceFolders) {
             return vscode.window.showInformationMessage('No folder or workspace opened');
         }
- 
+
         const writeData = Buffer.from(data, 'utf8');
 
-        await vscode.workspace.fs.writeFile(path, writeData);
+        try {
+
+            await vscode.workspace.fs.writeFile(path, writeData);
+        } catch (error) {
+
+            console.log("Error while writing", error);
+        }
     }
 
     /**
@@ -113,7 +120,7 @@ export class MapManager implements IMapManager {
             vscode.window.showInformationMessage('No folder or workspace opened');
             return;
         }
-        
+
         let content: string;
 
         try {
@@ -136,7 +143,7 @@ export class MapManager implements IMapManager {
         let result: string[] = [];
 
         for (let i = 0; i < mapNames.length; i++) {
-            let element = vscode.Uri.joinPath(wf.uri,mapNames[i]);
+            let element = vscode.Uri.joinPath(wf.uri, mapNames[i]);
 
             let map: mapFile | undefined = await this.readMap(element);
             if (map === undefined || map?.mapPath === "") {
@@ -149,5 +156,4 @@ export class MapManager implements IMapManager {
 
         return result;
     }
-
 }

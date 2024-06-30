@@ -90,6 +90,7 @@
   overflow-y: scroll;
   padding-left: 0px;
   margin-left: 0px;
+  font-size: medium;
 }
 
 #map {
@@ -102,10 +103,14 @@ body {
   padding: 0;
 }
 
+/*
+ * Base style for panels.
+ */
 .panel {
   position: absolute;
   font-style: italic;
   color: #000;
+  margin: 5px;
 }
 
 .separator {
@@ -187,15 +192,15 @@ body {
   * Draw toolbar icons.
   */
 
-  .leaflet-draw-toolbar .leaflet-draw-draw-polyline::after {
-    font-family: "bootstrap-icons";
-    content: "\f52d";
-  }
+.leaflet-draw-toolbar .leaflet-draw-draw-polyline::after {
+  font-family: "bootstrap-icons";
+  content: "\f52d";
+}
 
-  .leaflet-draw-toolbar .leaflet-draw-draw-polygon::after {
-    font-family: "bootstrap-icons";
-    content: "\f4cc";
-  }
+.leaflet-draw-toolbar .leaflet-draw-draw-polygon::after {
+  font-family: "bootstrap-icons";
+  content: "\f4cc";
+}
 
 .leaflet-draw-toolbar .leaflet-draw-draw-rectangle::after {
   font-family: "bootstrap-icons";
@@ -259,4 +264,193 @@ body {
 
 .leaflet-container {
   background: rgb(60, 60, 60) !important;
+}
+
+table,
+th,
+td {
+  border: 1px solid white;
+  border-collapse: collapse;
+}
+
+th,
+td {
+
+  background-color: rgba(50, 50, 50, 0.8);
+}
+
+.icon-browser-background {
+  width: calc(100vw - 345px - 50px);
+  height: 300px;
+
+  /*bottom: 3px;*/
+  overflow: scroll;
+}
+
+@media (min-width: 768px) {
+  .icon-browser-background {
+    /*    transition: width 200ms; */
+  }
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  .icon-browser-background {
+    width: calc(100vw - 37px - 305px - 50px);
+  }
+}
+
+@media (min-width: 992px) and (max-width: 1199px) {
+  .icon-browser-background {
+    width: calc(100vw - 37px - 390px - 50px);
+  }
+}
+
+@media (min-width: 1200px) {
+  .icon-browser-background {
+    width: calc(100vw - 37px - 460px - 50px);
+  }
+}
+
+.icon-browser-folders {
+  display: grid;
+  grid-template-rows: repeat(auto-fit, minmax(60px, 0fr));
+  overflow: scroll;
+}
+
+/*Grid for icons*/
+.icon-browser-icon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(62px, 0fr));
+  grid-template-rows: repeat(auto-fit, minmax(62px, 0fr));
+  overflow: scroll;
+  height: 225px;
+}
+
+/* Button for individual icon*/
+.icon-browser-button {
+  width: 60px;
+  height: 60px;
+  background: rgba(25, 25, 25, 0.9);
+  display: block;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.65);
+  border-radius: 5px;  
+  padding: 0px;
+}
+
+/* Individual icon's image*/
+.icon-browser-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background-repeat: no-repeat;
+  pointer-events: none;
+}
+
+/* Searchbar to find icons by name*/
+.searchbar {
+  width: calc(100% - 15px);
+  background: rgba(35, 35, 35, 0.9);
+  color: whitesmoke;
+  height: 30px;
+  outline: 0px;
+  border: 0px;
+}
+
+/* Button for returning to the previous folder */
+.backButton {
+  height: 50px;
+  background-color: rgba(0, 0, 0, 0);
+  border: none;
+  /* Remove borders */
+  color: white;
+  /* White text */
+  cursor: pointer;
+}
+
+/* Label for path */
+.path {
+  width: calc(100% - 15px);
+  background: rgba(35, 35, 35, 0.9);
+  color: whitesmoke;
+  height: 40px;
+  outline: 1px;
+  border: 1px;
+  font-size: 20px;
+  margin-left: 15px;
+}
+
+.favorite {
+  height: 50px;
+  background-color: rgba(0, 0, 0, 0);
+  border: none;
+  /* Remove borders */
+  color: white;
+  /* White text */
+  cursor: pointer;
+  display: none;
+
+}
+
+.icon-browser-folder {
+  text-align: left;
+  height: 50px;
+  width: auto;
+  background-color: rgba(0, 0, 0, 0);
+  color: white;
+  border: none;
+}
+
+/* Button for opening and closing the icon browser */
+.icon-browser-collapsible {
+  width: 50px;
+  height: 50px;
+  border: none;
+  background-color: rgba(0, 0, 0, 0);
+  position: absolute;
+  bottom: 0;
+}
+
+.backButton:hover,
+.favorite:hover,
+.icon-browser-folder:hover,
+.icon-browser-collapsible:hover {
+  background-color: rgba(50, 50, 50, 0.9);
+}
+
+.icon-browser-control {
+  display: grid;
+  width: 50px;
+}
+
+.icon-browser-panel {
+  background: rgba(25, 25, 25, 0.9);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Icon Bar on the left */
+.icon-browser-root {
+  display: flex;
+  flex-direction: row;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.65);
+  border-radius: 5px;  
+  position: relative;
+  bottom: 3px;
+}
+
+.icon-browser-window {
+  background: rgba(30, 30, 30, 0.9);
+  overflow: hidden;
+  margin: 0px;
+}
+
+.svgIcon {
+  mask-size: cover;
+  /*background-color: blue;*/
+  stroke: green;
+  fill: rgb(99, 161, 255);
+  stroke-width: 2px;
+  /* Or any color of your choice. */
+  width: 30px;
+  height: 30px;
 }

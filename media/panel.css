@@ -12,7 +12,6 @@
     background-size: cover;
     border: none;
     color: whitesmoke;
-
 }
 
 /*
@@ -24,7 +23,6 @@
     max-height: 200px;
     object-fit: cover;
 }
-
 
 /*
  * Highlights hovered buttons in the recent maps lists.

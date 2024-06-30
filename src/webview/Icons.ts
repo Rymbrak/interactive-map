@@ -7,10 +7,13 @@ export module Icons {
         private iconMap = new Map();
         private divIconMap = new Map();
         private marker: string = "";
+        private code: any;
 
         private iconSize: [number, number] = [25, 41];
 
-        constructor() {
+        constructor(code: any) {
+
+            this.code = code;
 
             /**
              * We set some basic icon html elements for use in the ui. Note, these are references to the bootstrap font, because we can't style svgs loaded from the css easily..
@@ -41,6 +44,14 @@ export module Icons {
 
             this.setIcon("settings", '<div class="sidebar-icon"><i id="sidebar-icon" class="bi-gear-fill"></i> </div>');
 
+            this.setIcon("help", '<div class="sidebar-icon"><i id="sidebar-icon" class="bi-question-circle-fill"></i> </div>');
+            this.setIcon("help", '<div class="sidebar-icon"><i id="sidebar-icon" class="bi-question-circle-fill"></i> </div>');
+
+            this.setIcon("arrow-left", '<div class="sidebar-icon"> <i class="bi-arrow-left"> </i> </div>');
+            this.setIcon("suit-heart-fill", '<div class="sidebar-icon"> <i class="bi-suit-heart-fill"> </i> </div>');
+            this.setIcon("folder-fill", '<div class="sidebar-icon"> <i class="bi-folder-fill"> </i> </div>');
+            this.setIcon("file-image-fill", '<div class="sidebar-icon"> <i class="bi-file-image-fill"> </i> </div>');
+
             this.setDivIcon("marker", L.divIcon({
                 className: 'marker',
                 html: this.iconMap.get("marker"),
@@ -52,6 +63,13 @@ export module Icons {
                 className: 'marker-highlight',
                 html: this.iconMap.get("marker-highlight"),
                 iconSize: [30, 42],
+                iconAnchor: [15, 42]
+            }));
+
+            this.setDivIcon("svg", L.divIcon({
+                className: 'svgIcon',
+                html: '<div class="svgIcon"></div>',
+                iconSize: [45, 45],
                 iconAnchor: [15, 42]
             }));
 
@@ -78,7 +96,7 @@ export module Icons {
                     return this.styleHighlight(this.iconMap.get(name));
 
                 default:
-                    return this.iconMap.get(name);;
+                    return this.iconMap.get(name);
             }
         };
 
@@ -112,6 +130,19 @@ export module Icons {
             this.iconMap.set(name, value);
         }
 
+        public makeImage(path: string, color: string = "black"): string {
+
+            let result = '<div style="mask-image:url(' + path + ');  background-color: ' + color + ';" class="svgIcon"></div>';
+            return result;
+        }
+
+        public makeIcon(path: string) {
+            return L.icon({
+                iconUrl: path,
+                iconSize: [30, 42],
+                iconAnchor: [15, 42]
+            });
+        }
     }
 
 }

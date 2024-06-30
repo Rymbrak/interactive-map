@@ -8,7 +8,7 @@ Create an interactive map with a custom background. Place various features with 
 
 Supported feature layers:
 
-- Markers
+- Markers with custom SVG icons and color
 - Circle Markers
 - Polylines
 - Polygons
@@ -19,5 +19,7 @@ Maps can be created from the activity bar icon, which also lists recently opened
 Multi-root workspaces are supported, map files should be located inside a workspace to be recognized.
 
 Images used for maps are stored inside the interactive-map folder of the corresponding workspace, moving that and the json, along with the map files is enough to use them in another workspace.
+
+You can use notes from Dendron to populate the descriptions of features.
 
 Feedback and feature requests are appreciated.

@@ -52,9 +52,14 @@ export module Load {
         loadMarkers(json: layer) {
 
             json.content.features.forEach(element => {
-                this.featureFactory.createMarker(element);
+               this.featureFactory.createMarker(element);
             });
-            this.layerManager.getLayer("marker").addTo(this.map);
+            /**
+             * It seems that we don't need to add the layers, all the features still work fine.
+             * The layer hiding must have been fixed.
+             * However, hiding svg markers is completely broken. They get hidden but cannot be revealed again.6
+             */
+           // this.layerManager.getLayer("marker").addTo(this.map);
         }
 
         loadCircleMarkers(json: layer) {
@@ -62,7 +67,7 @@ export module Load {
             json.content.features.forEach(element => {
                 this.featureFactory.createCircleMarker(element);
             });
-            this.layerManager.getLayer("circlemarker").addTo(this.map);
+       //     this.layerManager.getLayer("circlemarker").addTo(this.map);
         }
 
         loadRectangles(json: layer) {
@@ -70,7 +75,7 @@ export module Load {
             json.content.features.forEach(element => {
                 this.featureFactory.createRectangle(element);
             });
-            this.layerManager.getLayer("rectangle").addTo(this.map);
+     //       this.layerManager.getLayer("rectangle").addTo(this.map);
         }
 
         loadCircles(json: layer) {
@@ -78,7 +83,7 @@ export module Load {
             json.content.features.forEach(element => {
                 this.featureFactory.createCircle(element);
             });
-            this.layerManager.getLayer("circle").addTo(this.map);
+        //    this.layerManager.getLayer("circle").addTo(this.map);
         }
 
         loadPolygons(json: layer) {
@@ -86,7 +91,7 @@ export module Load {
             json.content.features.forEach(element => {
                 this.featureFactory.createPolygon(element);
             });
-            this.layerManager.getLayer("polygon").addTo(this.map);
+    //        this.layerManager.getLayer("polygon").addTo(this.map);
         }
 
         loadPolylines(json: layer) {
@@ -94,7 +99,7 @@ export module Load {
             json.content.features.forEach(element => {
                 this.featureFactory.createPolyline(element);
             });
-            this.layerManager.getLayer("polyline").addTo(this.map);
+        //    this.layerManager.getLayer("polyline").addTo(this.map);
         }
     }
 }

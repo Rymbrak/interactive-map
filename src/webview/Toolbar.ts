@@ -116,9 +116,7 @@ export module Toolbar {
             });
 
             this.map.on(L.Draw.Event.EDITED, (event: any) => {
-console.log(event);
-console.log(event.layers);
-console.log(event.layers._layers);
+
                 /**
                  * The radius of a circle is a separate property that isn't saved when we turn the layer in to GeoJson, so we need to update the radius in the feature section.
                  */

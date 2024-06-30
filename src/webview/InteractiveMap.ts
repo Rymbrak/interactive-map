@@ -2,6 +2,7 @@ import { FeatureFactories } from "./FeatureFactories";
 import { Icons } from "./Icons";
 import { Layers } from "./Layers";
 import { Sidebar } from "./Sidebar";
+import { HelpPanel } from "./HelpPanel";
 import { Save } from "./Save";
 import { Toolbar } from "./Toolbar";
 import * as L from 'leaflet';
@@ -10,6 +11,8 @@ import { MapUtilities } from "./MapUtilities";
 import { Load } from "./Load";
 import { Utilities } from "./Utilities";
 import { VersionManager } from "./Version";
+import { Integration } from "./NoteRenderer";
+import { IconBrowser } from "./IconBrowser";
 
 export module InteractiveMap {
 
@@ -31,7 +34,7 @@ export module InteractiveMap {
      */
     export class InteractiveMap {
 
-        vscode: any;
+        vscode: { postMessage: any; };
 
         featureFactory: IFeatureFactory;
         iconManager: IIconManager;
@@ -42,6 +45,9 @@ export module InteractiveMap {
         toolbarManager: IToolbar;
         loadManager: ILoadManager;
         versionManager: VersionManager;
+        noteRenderer: INoteRenderer;
+        helpPanel: IHelpPanel;
+        iconBrowser: IconBrowser.IconBrowser;
 
         map: L.Map;
 
@@ -59,17 +65,29 @@ export module InteractiveMap {
             /**
              * Create all the necessary objects to provide functionality.
              */
-            this.iconManager = new Icons.IconManager();
+
+            this.iconManager = new Icons.IconManager(this.vscode);
             this.layerManager = new Layers.LayerManager(this.map);
-            this.featureFactory = new FeatureFactories.FeatureFactory(this.layerManager, this.iconManager);
+            this.featureFactory = new FeatureFactories.FeatureFactory(this.vscode, this.layerManager, this.iconManager);
             this.versionManager = new VersionManager();
             this.saveManager = new Save.SaveManager(this.vscode, this.layerManager, this.versionManager);
+            this.noteRenderer = new Integration.NoteRenderer();
+            this.helpPanel = new HelpPanel.HelpPanel();
             this.init(image);
 
-            this.mapUtilities = new MapUtilities.FeatureUtilities(this.map, this.layerManager, this.iconManager, this.saveManager);
-            this.sidebarManager = new Sidebar.SidebarManager(this.vscode, this.map, this.iconManager, this.layerManager, this.saveManager, this.mapUtilities);
+            this.mapUtilities = new MapUtilities.FeatureUtilities(this.vscode, this.map, this.layerManager, this.iconManager, this.saveManager);
+            this.iconBrowser = new IconBrowser.IconBrowser(this.iconManager, {position: "bottomleft" });
+            this.iconBrowser.addTo(this.map);
+            this.sidebarManager = new Sidebar.SidebarManager(this.vscode, this.map, this.iconManager, this.iconBrowser, this.layerManager, this.saveManager, this.mapUtilities, this.helpPanel);
             this.toolbarManager = new Toolbar.ToolbarManager(this.map, this.layerManager, this.iconManager, this.saveManager, this.sidebarManager);
             this.loadManager = new Load.LoadManager(this.map, this.layerManager, this.featureFactory);
+            this.drawCoordinates();
+            this.map.attributionControl.setPosition("topright");
+            let attribution = this.map.attributionControl.getContainer();
+            if (attribution) {
+                attribution.style.right = '10px';
+                attribution.style.top = '15px';
+            }
         }
 
         private init(image: string) {
@@ -78,7 +96,6 @@ export module InteractiveMap {
              * Setup the map and add coordinates ui.
              */
             this.setMap(image, [[0, 0], [1024, 1024]]);
-            this.drawCoordinates();
         }
 
         /**

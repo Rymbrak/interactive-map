@@ -19,7 +19,11 @@ export class InteractiveMapSerializer implements vscode.WebviewPanelSerializer {
 
 		this.core.fileUri = state;
 		if (state) {
-			this.core.open(this.core.extensionContext, state);
+			/**
+			 * There is a regression, where a map opened here will fail saving with w.with is not a function for some reason. There should virtually be no difference between manually opening and restoring from the webview.
+			 * Even the used data is identical. so I have no clue why it fails. It seems that the filesystem isn't writeable till some user interaction happens?
+			 */
+			//this.core.open(this.core.extensionContext, state);
 		}
 	}
 }

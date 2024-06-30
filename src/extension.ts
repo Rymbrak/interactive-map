@@ -7,6 +7,7 @@ import { Core } from './Core';
 import { InteractiveMapSerializer } from './InteractiveMapSerializer';
 import { MapManager } from './MapManager';
 import { VersionManager } from './webview/Version';
+import { Integration } from './integration/IntegrationManager';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -20,6 +21,7 @@ export function activate(this: any, context: vscode.ExtensionContext) {
 	let versionManager = new VersionManager();
 	let mapManager = new MapManager(context, versionManager);
 	let sidebarProvider = new SidebarProvider(context.extensionUri, mapManager);
+	let integrationManager = new Integration.IntegrationManager();
 
 
 	context.subscriptions.push(
@@ -29,7 +31,7 @@ export function activate(this: any, context: vscode.ExtensionContext) {
 		)
 	);
 
-	let core = new Core(context, sidebarProvider, mapManager);
+	let core = new Core(context, sidebarProvider, mapManager, integrationManager);
 
 	vscode.window.registerWebviewPanelSerializer('interactiveMap', new InteractiveMapSerializer(core));
 
@@ -96,4 +98,3 @@ function getURI(context: vscode.ExtensionContext, webview: vscode.Webview, path:
 
 	return webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, ...path, ...pathSegments));
 }
-

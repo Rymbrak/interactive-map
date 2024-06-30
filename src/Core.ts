@@ -1,19 +1,27 @@
 import * as vscode from "vscode";
-import { getHtmlForWebview } from "./Template";
+import { getHtmlForWebview, getHtml } from "./Template";
 import { SidebarProvider } from "./SidebarProvider";
 import { createSettings, readSettings, saveSettings } from "./Settings";
-import { IMapManager } from "./webview/Interfaces/IMapManager";
+import { IMapManager } from "./interfaces/IMapManager";
+import { Integration } from "./integration/IntegrationManager";
+import { log } from "console";
+
 
 export class Core {
 
-    constructor(extensionContext: any, sidebarProvider: SidebarProvider, mapManager: IMapManager) {
+    constructor(extensionContext: any, sidebarProvider: SidebarProvider, mapManager: IMapManager, integrationManager: Integration.IntegrationManager) {
 
         this.extensionContext = extensionContext;
         this.sidebarProvider = sidebarProvider;
         this.mapManager = mapManager;
+        this.integrationManager = integrationManager;
+        this.loadIcons();
+        this.loadFolders();
     }
 
     mapManager: IMapManager;
+
+    integrationManager: Integration.IntegrationManager;
 
     /**
      * Main panel for the extension. always opened in second column.
@@ -48,6 +56,11 @@ export class Core {
     extensionContext: vscode.ExtensionContext;
 
     refresh = false;
+    folders: string[] = [];
+    /**
+     * Filters for loading images.
+     */
+    extensions: string[] = [".png", ".jpg", ".svg"];
 
     /**
      * Creates a panel for the extension to display maps in.
@@ -94,7 +107,7 @@ export class Core {
             'JSON': ['json']
         };
 
-        let file: vscode.Uri[] | undefined = await vscode.window.showOpenDialog({ canSelectMany: false , filters: filters });
+        let file: vscode.Uri[] | undefined = await vscode.window.showOpenDialog({ canSelectMany: false, filters: filters });
 
         if (!vscode.workspace.workspaceFolders) {
             return vscode.window.showInformationMessage('No folder or workspace opened');
@@ -121,17 +134,17 @@ export class Core {
     /**
      * Opens the provided map file.
      * @param context Extension context provided by the extension.
-      * @returns  An error if there is no workspace. Otherwise nothing is returned.
+     * @returns  An error if there is no workspace. Otherwise nothing is returned.^
      */
     async open(context: vscode.ExtensionContext, path: vscode.Uri) {
-
+        
         if (!vscode.workspace.workspaceFolders) {
 
             vscode.window.showInformationMessage('No folder or workspace opened');
             return;
         }
 
-        const wf = vscode.workspace.getWorkspaceFolder(path)?.uri;
+        const wf = vscode.workspace.getWorkspaceFolder(path);
         if (wf) {
 
             if (!this.panel || this.isDisposed) {
@@ -139,7 +152,7 @@ export class Core {
             }
 
             let json = await this.mapManager.readMap(path, context);
-            let name = path.path.replace(wf.path + "/", "");
+            let name = path.path.replace(wf.uri.path + "/", "");
 
             if (json === undefined) {
                 /**
@@ -156,7 +169,7 @@ export class Core {
              * If the background image path is empty, we just pass an empty string, which will be resolved to the empty background placeholder.
              */
             if (this.mapPath !== "") {
-                imagePath = this.panel.webview.asWebviewUri(vscode.Uri.joinPath(wf, this.mapPath)).toString();
+                imagePath = this.panel.webview.asWebviewUri(vscode.Uri.joinPath(wf.uri, this.mapPath)).toString();
             }
             const layers = json["layers"];
             const bounds = json["bounds"];
@@ -166,6 +179,7 @@ export class Core {
             this.panel.webview.postMessage({ command: 'openMap', path, imagePath, bounds, layers });
 
             await this.addRecent(path, name);
+            this.integrationManager.setWorkspace(wf.name);
         }
     }
 
@@ -262,6 +276,31 @@ export class Core {
                                 }
                             }
                             return;
+                        case 'parseNote':
+                            /**
+                             * command: 'parseNote',
+                             * layer: layer,
+                             * index: index,
+                             * note: text
+                             */
+
+                            this.updatePopup(message.layer, message.index, message.note);
+                            return;
+
+                        case "requestHtml":
+                            /**
+                             * message.name contains the name of the html.
+                             * We use send the name back as identifier.
+                             */
+                            if (this.fileUri) {
+                                if (this.panel) {
+                                    let name = message.name;
+                                    let content = getHtml(this.extensionContext, message.name);
+                                    this.panel.webview.postMessage({ command: 'html', content, name });
+                                }
+                            }
+                            return;
+
                     }
                 },
                 undefined,
@@ -271,6 +310,18 @@ export class Core {
             this.isDisposed = false;
             this.subscription = this.panel.onDidDispose(this.listener);
         }
+    }
+
+    async updatePopup(layer: string, index: number, note: string) {
+
+        let text = await this.integrationManager.parseNote(note);
+
+        if (!this.panel) {
+            this.panel = this.createPanel(this.extensionContext);
+        }
+
+        this.panel.webview.postMessage({ command: 'parse', layer: layer, index: index, text: text });
+
     }
 
     /**
@@ -348,7 +399,7 @@ export class Core {
             'JSON': ['json']
         };
 
-        let file: vscode.Uri | undefined = await vscode.window.showSaveDialog({ filters: filters , title: "Enter a file name (no extension needed)" });
+        let file: vscode.Uri | undefined = await vscode.window.showSaveDialog({ filters: filters, title: "Enter a file name (no extension needed)" });
 
         if (!vscode.workspace.workspaceFolders) {
             return vscode.window.showInformationMessage('No folder or workspace opened');
@@ -369,4 +420,87 @@ export class Core {
         */
     }
 
+    /**
+     * Loads all icons in the icons directory of the extension.
+     * Icons are divided by the first level folders into icon packs.
+     */
+    async loadIcons() {
+
+        let iconPath = vscode.Uri.joinPath(this.extensionContext.extensionUri, "icons");
+        let files: vscode.Uri[] = await this.getFilesRecursively(iconPath);
+
+        files.forEach(element => {
+            //console.log(element);
+        });
+
+        let packs: string[][] = [];
+    }
+
+    async loadFolders() {
+
+        let iconPath = vscode.Uri.joinPath(this.extensionContext.extensionUri, "icons");
+        let paths: [string, vscode.FileType][] = await vscode.workspace.fs.readDirectory(iconPath);
+
+        if (!this.panel) {
+            this.panel = this.createPanel(this.extensionContext);
+        }
+
+        let folderPaths: string[] = [];
+        let folderContent: string[][] = [];
+
+        for (let i = 0; i < paths.length; i++) {
+            const element = paths[i];
+            if (element[1] === vscode.FileType.Directory) {
+                let files: vscode.Uri[] = await this.getFilesRecursively(vscode.Uri.joinPath(iconPath, element[0]), this.extensions);
+
+                folderPaths.push(element[0]);
+                folderContent.push(this.convertToWebviewUrl(files));
+            }
+        }
+
+        this.panel.webview.postMessage({ command: 'drawFolders', folderPaths, folderContent });
+    }
+
+    /**
+     * Converts a list of Uris to webview paths.
+     * @param paths 
+     * @returns A list of urls.
+     */
+    convertToWebviewUrl(paths: vscode.Uri[]) {
+        let urls: string[] = [];
+        for (let i = 0; i < paths.length; i++) {
+            if (this.panel) {
+                urls.push(this.panel.webview.asWebviewUri(paths[i]).toString());
+            }
+        }
+        return urls;
+    }
+
+    /**
+     * Searches the given directory recursively and returns a list of all found files.
+     * @param path Root folder path to search in.
+     * @returns List of all found files.
+     */
+    async getFilesRecursively(path: vscode.Uri, extensions: string[] = []): Promise<vscode.Uri[]> {
+
+        let files: vscode.Uri[] = [];
+
+        let paths: [string, vscode.FileType][] = await vscode.workspace.fs.readDirectory(path);
+
+        for (let i = 0; i < paths.length; i++) {
+            const element = paths[i];
+
+            if (element[1] === vscode.FileType.Directory) {
+
+                let recursion: vscode.Uri[] = await this.getFilesRecursively(vscode.Uri.joinPath(path, element[0]), extensions);
+                files.push(...recursion);
+            } else {
+                if (extensions.some((ext) => element[0].endsWith(ext))) {
+                    files.push(vscode.Uri.joinPath(path, element[0]));
+                }
+            }
+        }
+
+        return files;
+    }
 }

@@ -3,7 +3,7 @@
  * Intended to provide update paths for earlier versions in case of breaking changes.
  */
 export class VersionManager implements IVersionManager {
-    version: string = "0.3.0";
+    version: string = "0.5.0";
 
     /**
      * Applies patches to a map file if necessary.

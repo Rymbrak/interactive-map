@@ -1,5 +1,5 @@
 interface IFeatureFactory {
-    createMarker(element: feature): L.Layer;
+    createMarker(element: feature): any;
     createCircleMarker(element: feature): L.Layer;
     createRectangle(element: feature): L.Layer;
     createCircle(element: feature): L.Layer;

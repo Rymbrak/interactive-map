@@ -14,7 +14,6 @@ export async function createSettings(workspace?: string) {
 	await saveSettings(JSON.stringify(data, null, 2), workspace);
 }
 
-
 /**
  * Reads the settings file located in the workspace with the provided name.
  * The first available workspace is used If no name is provided. Also creates a settings file if the workspace doesn't already contain one.
@@ -47,15 +46,19 @@ export async function readSettings(workspace?: string): Promise<settings | null>
 	const path = vscode.Uri.joinPath(wf, fileName);
 
 	// Check if settings exist, otherwise create them.
-	let file;
+	let file: Uint8Array;
+
+	let content: settings | null = null;
 	try {
 		file = await vscode.workspace.fs.readFile(path);
+		content = JSON.parse(file.toString());
 	} catch {
+			// The settings file likely is broken or missing, so we regenerate it.
 		await createSettings(workspace);
 		file = await vscode.workspace.fs.readFile(path);
 	}
 
-	return JSON.parse(file.toString());
+	return content;
 }
 
 /**

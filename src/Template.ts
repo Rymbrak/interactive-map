@@ -109,10 +109,22 @@ export function getHtmlForActivityBar(uri: vscode.Uri, webview: vscode.Webview) 
  * @param context 
  * @returns 
  */
-function getWebviewContent(pathToHtml: vscode.Uri) {
-
+export function getWebviewContent(pathToHtml: vscode.Uri) {
+    
     const pathUri = pathToHtml.with({ scheme: 'vscode-resource' });
     const html = fs.readFileSync(pathUri.fsPath, 'utf8');
+
+    return html;
+}
+
+/**
+ * Read the html file and return it as a string.
+ * @param context 
+ * @returns 
+ */
+export function getHtml(context: vscode.ExtensionContext, name: string) {
+
+    let html = getWebviewContent(vscode.Uri.file(path.join(context.extensionPath, 'out', 'html', name+'.html').toString()));
     return html;
 }
 
